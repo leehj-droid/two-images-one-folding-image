@@ -1,15 +1,18 @@
 // ======================================================
 // TWO IMAGES / ONE FOLDING IMAGE
 //
-// 1. Upload two images
-// 2. Crop each image to A4 portrait ratio using COVER
-// 3. Drag each preview image to reposition
-// 4. Adjust Black & White
-// 5. Adjust Zoom
-// 6. Divide each image into 8 fixed vertical slices
-// 7. Interleave A1 B1 A2 B2 ...
-// 8. Add short black scoring marks at top and bottom
-// 9. Download final PNG
+// RESPONSIVE VERSION
+//
+// Desktop:
+// PHOTO 1 + PHOTO 2 side by side
+//
+// Mobile:
+// PHOTO 1
+// PHOTO 2
+// FINAL IMAGE
+//
+// Final downloaded image remains:
+// 2480 × 1754 px
 // ======================================================
 
 
@@ -44,13 +47,58 @@ let offsetY2 = 0;
 
 
 // ======================================================
+// RESPONSIVE
+// ======================================================
+
+let isMobile = false;
+
+const desktopW = 1000;
+const desktopH = 1420;
+
+
+// ======================================================
+// PREVIEW AREAS
+// Dynamic values
+// ======================================================
+
+let preview1 = {
+  x: 70,
+  y: 290,
+  w: 350,
+  h: 495
+};
+
+let preview2 = {
+  x: 580,
+  y: 290,
+  w: 350,
+  h: 495
+};
+
+
+// ======================================================
+// LAYOUT VALUES
+// ======================================================
+
+let layout = {};
+
+
+// ======================================================
 // DRAGGING
 // ======================================================
 
 let draggingPhoto = 0;
 
-let lastMouseX = 0;
-let lastMouseY = 0;
+let lastPointerX = 0;
+let lastPointerY = 0;
+
+
+// ======================================================
+// PERFORMANCE
+// ======================================================
+
+let updateTimer1 = null;
+let updateTimer2 = null;
 
 
 // ======================================================
@@ -78,57 +126,24 @@ let saveButton;
 // ======================================================
 // WORKING SIZE
 //
-// Each source image:
 // A4 portrait ratio
-// 1240 × 1754 px
-//
-// Final image:
-// 2480 × 1754 px
 // ======================================================
 
 const workW = 1240;
 const workH = 1754;
 
 
-// Fixed number of slices per image
+// Fixed number of slices
 const numSlices = 8;
 
 
 // ======================================================
 // TOP / BOTTOM SCORING MARKS
 //
-// 1754 px = 297 mm
-// approx. 59 px = 10 mm = 1 cm
+// approx. 1 cm
 // ======================================================
 
 const markLength = 59;
-
-
-// ======================================================
-// WEB CANVAS
-// ======================================================
-
-const canvasW = 1000;
-const canvasH = 1420;
-
-
-// ======================================================
-// PHOTO PREVIEW AREAS
-// ======================================================
-
-const preview1 = {
-  x: 70,
-  y: 290,
-  w: 350,
-  h: 495
-};
-
-const preview2 = {
-  x: 580,
-  y: 290,
-  w: 350,
-  h: 495
-};
 
 
 // ======================================================
@@ -137,18 +152,35 @@ const preview2 = {
 
 function setup() {
 
+  isMobile =
+    windowWidth <= 700;
+
+
+  let initialW;
+
+  if (isMobile) {
+
+    initialW =
+      min(windowWidth, 520);
+
+  } else {
+
+    initialW =
+      desktopW;
+  }
+
+
   createCanvas(
-    canvasW,
-    canvasH
+    initialW,
+    isMobile ? 2200 : desktopH
   );
+
 
   pixelDensity(1);
 
-  noLoop();
-
 
   // ====================================================
-  // PHOTO 1 FILE INPUT
+  // HIDDEN FILE INPUT 1
   // ====================================================
 
   fileInput1 =
@@ -164,39 +196,17 @@ function setup() {
       "CHOOSE IMAGE"
     );
 
-  chooseButton1.position(
-    70,
-    115
+
+  styleChooseButton(
+    chooseButton1
   );
 
-  chooseButton1.style(
-    "padding",
-    "6px 12px"
-  );
-
-  chooseButton1.style(
-    "background",
-    "white"
-  );
-
-  chooseButton1.style(
-    "border",
-    "1px solid #999"
-  );
-
-  chooseButton1.style(
-    "border-radius",
-    "3px"
-  );
-
-  chooseButton1.style(
-    "cursor",
-    "pointer"
-  );
 
   chooseButton1.mousePressed(
     function () {
+
       fileInput1.elt.click();
+
     }
   );
 
@@ -213,14 +223,6 @@ function setup() {
       1
     );
 
-  thresholdSlider1.position(
-    165,
-    165
-  );
-
-  thresholdSlider1.size(
-    170
-  );
 
   thresholdSlider1.input(
     function () {
@@ -228,7 +230,8 @@ function setup() {
       threshold1 =
         thresholdSlider1.value();
 
-      updatePhoto1();
+      schedulePhotoUpdate(1);
+
     }
   );
 
@@ -245,14 +248,6 @@ function setup() {
       1
     );
 
-  zoomSlider1.position(
-    165,
-    215
-  );
-
-  zoomSlider1.size(
-    170
-  );
 
   zoomSlider1.input(
     function () {
@@ -260,13 +255,14 @@ function setup() {
       zoom1 =
         zoomSlider1.value() / 100;
 
-      updatePhoto1();
+      schedulePhotoUpdate(1);
+
     }
   );
 
 
   // ====================================================
-  // PHOTO 2 FILE INPUT
+  // HIDDEN FILE INPUT 2
   // ====================================================
 
   fileInput2 =
@@ -282,39 +278,17 @@ function setup() {
       "CHOOSE IMAGE"
     );
 
-  chooseButton2.position(
-    580,
-    115
+
+  styleChooseButton(
+    chooseButton2
   );
 
-  chooseButton2.style(
-    "padding",
-    "6px 12px"
-  );
-
-  chooseButton2.style(
-    "background",
-    "white"
-  );
-
-  chooseButton2.style(
-    "border",
-    "1px solid #999"
-  );
-
-  chooseButton2.style(
-    "border-radius",
-    "3px"
-  );
-
-  chooseButton2.style(
-    "cursor",
-    "pointer"
-  );
 
   chooseButton2.mousePressed(
     function () {
+
       fileInput2.elt.click();
+
     }
   );
 
@@ -331,14 +305,6 @@ function setup() {
       1
     );
 
-  thresholdSlider2.position(
-    675,
-    165
-  );
-
-  thresholdSlider2.size(
-    170
-  );
 
   thresholdSlider2.input(
     function () {
@@ -346,7 +312,8 @@ function setup() {
       threshold2 =
         thresholdSlider2.value();
 
-      updatePhoto2();
+      schedulePhotoUpdate(2);
+
     }
   );
 
@@ -363,14 +330,6 @@ function setup() {
       1
     );
 
-  zoomSlider2.position(
-    675,
-    215
-  );
-
-  zoomSlider2.size(
-    170
-  );
 
   zoomSlider2.input(
     function () {
@@ -378,7 +337,8 @@ function setup() {
       zoom2 =
         zoomSlider2.value() / 100;
 
-      updatePhoto2();
+      schedulePhotoUpdate(2);
+
     }
   );
 
@@ -392,10 +352,6 @@ function setup() {
       "DOWNLOAD IMAGE"
     );
 
-  saveButton.position(
-    canvasW / 2,
-    1295
-  );
 
   saveButton.style(
     "transform",
@@ -404,7 +360,7 @@ function setup() {
 
   saveButton.style(
     "padding",
-    "7px 16px"
+    "8px 18px"
   );
 
   saveButton.style(
@@ -427,8 +383,488 @@ function setup() {
     "pointer"
   );
 
+
   saveButton.mousePressed(
     saveFinalImage
+  );
+
+
+  // ====================================================
+  // RESPONSIVE LAYOUT
+  // ====================================================
+
+  applyResponsiveLayout();
+
+
+  noLoop();
+}
+
+
+// ======================================================
+// BUTTON STYLE
+// ======================================================
+
+function styleChooseButton(button) {
+
+  button.style(
+    "padding",
+    "6px 12px"
+  );
+
+  button.style(
+    "background",
+    "white"
+  );
+
+  button.style(
+    "border",
+    "1px solid #999"
+  );
+
+  button.style(
+    "border-radius",
+    "3px"
+  );
+
+  button.style(
+    "cursor",
+    "pointer"
+  );
+}
+
+
+// ======================================================
+// RESPONSIVE LAYOUT
+// ======================================================
+
+function applyResponsiveLayout() {
+
+  isMobile =
+    windowWidth <= 700;
+
+
+  if (isMobile) {
+
+    setMobileLayout();
+
+  } else {
+
+    setDesktopLayout();
+  }
+
+
+  redraw();
+}
+
+
+// ======================================================
+// DESKTOP LAYOUT
+// ======================================================
+
+function setDesktopLayout() {
+
+  resizeCanvas(
+    desktopW,
+    desktopH
+  );
+
+
+  // PREVIEWS
+
+  preview1 = {
+    x: 70,
+    y: 290,
+    w: 350,
+    h: 495
+  };
+
+
+  preview2 = {
+    x: 580,
+    y: 290,
+    w: 350,
+    h: 495
+  };
+
+
+  layout = {
+
+    titleY: 30,
+    subtitleY: 58,
+
+    photo1TitleY: 100,
+    photo2TitleY: 100,
+
+    fileName1X: 205,
+    fileName2X: 715,
+    fileNameY: 128,
+
+    bw1Y: 175,
+    zoom1Y: 225,
+
+    bw2Y: 175,
+    zoom2Y: 225,
+
+    drag1Y: 810,
+    drag2Y: 810,
+
+    instructionY: 855,
+
+    finalTitleY: 910,
+
+    finalX: 50,
+    finalY: 950,
+    finalW: 900,
+    finalH: 320,
+
+    downloadY: 1295,
+
+    email1Y: 1345,
+    email2Y: 1367
+  };
+
+
+  // PHOTO 1 CONTROLS
+
+  chooseButton1.position(
+    70,
+    115
+  );
+
+
+  thresholdSlider1.position(
+    165,
+    165
+  );
+
+  thresholdSlider1.size(
+    170
+  );
+
+
+  zoomSlider1.position(
+    165,
+    215
+  );
+
+  zoomSlider1.size(
+    170
+  );
+
+
+  // PHOTO 2 CONTROLS
+
+  chooseButton2.position(
+    580,
+    115
+  );
+
+
+  thresholdSlider2.position(
+    675,
+    165
+  );
+
+  thresholdSlider2.size(
+    170
+  );
+
+
+  zoomSlider2.position(
+    675,
+    215
+  );
+
+  zoomSlider2.size(
+    170
+  );
+
+
+  // DOWNLOAD
+
+  saveButton.position(
+    width / 2,
+    layout.downloadY
+  );
+}
+
+
+// ======================================================
+// MOBILE LAYOUT
+// ======================================================
+
+function setMobileLayout() {
+
+  let mobileW =
+    min(windowWidth, 520);
+
+
+  let margin = 20;
+
+
+  let previewW =
+    mobileW -
+    margin * 2;
+
+
+  let previewH =
+    previewW *
+    workH /
+    workW;
+
+
+  // ====================================================
+  // PHOTO 1
+  // ====================================================
+
+  let photo1TitleY = 110;
+
+  let choose1Y = 135;
+
+  let bw1Y = 205;
+
+  let zoom1Y = 265;
+
+  let preview1Y = 325;
+
+
+  preview1 = {
+
+    x: margin,
+    y: preview1Y,
+    w: previewW,
+    h: previewH
+
+  };
+
+
+  let drag1Y =
+    preview1.y +
+    preview1.h +
+    25;
+
+
+  // ====================================================
+  // PHOTO 2
+  // ====================================================
+
+  let photo2TitleY =
+    drag1Y +
+    70;
+
+
+  let choose2Y =
+    photo2TitleY +
+    25;
+
+
+  let bw2Y =
+    photo2TitleY +
+    95;
+
+
+  let zoom2Y =
+    photo2TitleY +
+    155;
+
+
+  let preview2Y =
+    photo2TitleY +
+    215;
+
+
+  preview2 = {
+
+    x: margin,
+    y: preview2Y,
+    w: previewW,
+    h: previewH
+
+  };
+
+
+  let drag2Y =
+    preview2.y +
+    preview2.h +
+    25;
+
+
+  // ====================================================
+  // FINAL IMAGE
+  // ====================================================
+
+  let instructionY =
+    drag2Y +
+    45;
+
+
+  let finalTitleY =
+    instructionY +
+    55;
+
+
+  let finalY =
+    finalTitleY +
+    35;
+
+
+  let finalW =
+    previewW;
+
+
+  let finalH =
+    finalW *
+    workH /
+    (workW * 2);
+
+
+  let downloadY =
+    finalY +
+    finalH +
+    40;
+
+
+  let email1Y =
+    downloadY +
+    60;
+
+
+  let email2Y =
+    email1Y +
+    23;
+
+
+  let mobileCanvasH =
+    email2Y +
+    55;
+
+
+  resizeCanvas(
+    mobileW,
+    mobileCanvasH
+  );
+
+
+  // ====================================================
+  // STORE LAYOUT
+  // ====================================================
+
+  layout = {
+
+    titleY: 35,
+    subtitleY: 65,
+
+    photo1TitleY: photo1TitleY,
+    photo2TitleY: photo2TitleY,
+
+    choose1Y: choose1Y,
+    choose2Y: choose2Y,
+
+    bw1Y: bw1Y,
+    zoom1Y: zoom1Y,
+
+    bw2Y: bw2Y,
+    zoom2Y: zoom2Y,
+
+    drag1Y: drag1Y,
+    drag2Y: drag2Y,
+
+    instructionY: instructionY,
+
+    finalTitleY: finalTitleY,
+
+    finalX: margin,
+    finalY: finalY,
+    finalW: finalW,
+    finalH: finalH,
+
+    downloadY: downloadY,
+
+    email1Y: email1Y,
+    email2Y: email2Y
+
+  };
+
+
+  // ====================================================
+  // MOBILE PHOTO 1 CONTROLS
+  // ====================================================
+
+  chooseButton1.position(
+    margin,
+    choose1Y
+  );
+
+
+  thresholdSlider1.position(
+    155,
+    bw1Y - 10
+  );
+
+  thresholdSlider1.size(
+    max(
+      120,
+      mobileW - 205
+    )
+  );
+
+
+  zoomSlider1.position(
+    155,
+    zoom1Y - 10
+  );
+
+  zoomSlider1.size(
+    max(
+      120,
+      mobileW - 205
+    )
+  );
+
+
+  // ====================================================
+  // MOBILE PHOTO 2 CONTROLS
+  // ====================================================
+
+  chooseButton2.position(
+    margin,
+    choose2Y
+  );
+
+
+  thresholdSlider2.position(
+    155,
+    bw2Y - 10
+  );
+
+  thresholdSlider2.size(
+    max(
+      120,
+      mobileW - 205
+    )
+  );
+
+
+  zoomSlider2.position(
+    155,
+    zoom2Y - 10
+  );
+
+  zoomSlider2.size(
+    max(
+      120,
+      mobileW - 205
+    )
+  );
+
+
+  // ====================================================
+  // DOWNLOAD
+  // ====================================================
+
+  saveButton.position(
+    mobileW / 2,
+    downloadY
   );
 }
 
@@ -442,8 +878,25 @@ function draw() {
   background(248);
 
 
+  if (isMobile) {
+
+    drawMobile();
+
+  } else {
+
+    drawDesktop();
+  }
+}
+
+
+// ======================================================
+// DESKTOP DRAW
+// ======================================================
+
+function drawDesktop() {
+
   // ====================================================
-  // MAIN TITLE
+  // TITLE
   // ====================================================
 
   fill(30);
@@ -460,11 +913,9 @@ function draw() {
   text(
     "TWO IMAGES / ONE FOLDING IMAGE",
     width / 2,
-    30
+    layout.titleY
   );
 
-
-  // Subtitle
 
   fill(90);
 
@@ -473,7 +924,7 @@ function draw() {
   text(
     "Combine two images into one folding artwork.",
     width / 2,
-    58
+    layout.subtitleY
   );
 
 
@@ -488,13 +939,13 @@ function draw() {
   text(
     "PHOTO 1",
     245,
-    100
+    layout.photo1TitleY
   );
 
   text(
     "PHOTO 2",
     755,
-    100
+    layout.photo2TitleY
   );
 
 
@@ -512,15 +963,15 @@ function draw() {
   textSize(11);
 
   text(
-    fileName1,
-    205,
-    128
+    shortFileName(fileName1),
+    layout.fileName1X,
+    layout.fileNameY
   );
 
   text(
-    fileName2,
-    715,
-    128
+    shortFileName(fileName2),
+    layout.fileName2X,
+    layout.fileNameY
   );
 
 
@@ -535,30 +986,28 @@ function draw() {
   text(
     "Black & White",
     70,
-    175
+    layout.bw1Y
   );
 
   text(
     "Zoom",
     70,
-    225
+    layout.zoom1Y
   );
 
 
   text(
     threshold1,
     350,
-    175
+    layout.bw1Y
   );
 
   text(
     zoom1.toFixed(2) + "×",
     350,
-    225
+    layout.zoom1Y
   );
 
-
-  // PHOTO 1 HELP TEXT
 
   fill(120);
 
@@ -567,13 +1016,13 @@ function draw() {
   text(
     "Adjust the amount of black",
     350,
-    190
+    layout.bw1Y + 15
   );
 
   text(
     "Enlarge the image",
     350,
-    240
+    layout.zoom1Y + 15
   );
 
 
@@ -588,30 +1037,28 @@ function draw() {
   text(
     "Black & White",
     580,
-    175
+    layout.bw2Y
   );
 
   text(
     "Zoom",
     580,
-    225
+    layout.zoom2Y
   );
 
 
   text(
     threshold2,
     860,
-    175
+    layout.bw2Y
   );
 
   text(
     zoom2.toFixed(2) + "×",
     860,
-    225
+    layout.zoom2Y
   );
 
-
-  // PHOTO 2 HELP TEXT
 
   fill(120);
 
@@ -620,74 +1067,36 @@ function draw() {
   text(
     "Adjust the amount of black",
     860,
-    190
+    layout.bw2Y + 15
   );
 
   text(
     "Enlarge the image",
     860,
-    240
+    layout.zoom2Y + 15
   );
 
 
   // ====================================================
-  // PHOTO 1 PREVIEW
+  // PREVIEWS
   // ====================================================
 
-  if (
-    processed1 !== null
-  ) {
+  drawPhotoPreview(
+    processed1,
+    preview1,
+    "Choose your first image."
+  );
 
-    drawImageExact(
-      processed1,
-      preview1.x,
-      preview1.y,
-      preview1.w,
-      preview1.h
-    );
 
-  } else {
-
-    drawPlaceholder(
-      preview1.x,
-      preview1.y,
-      preview1.w,
-      preview1.h,
-      "Choose your first image."
-    );
-  }
+  drawPhotoPreview(
+    processed2,
+    preview2,
+    "Choose your second image."
+  );
 
 
   // ====================================================
-  // PHOTO 2 PREVIEW
-  // ====================================================
-
-  if (
-    processed2 !== null
-  ) {
-
-    drawImageExact(
-      processed2,
-      preview2.x,
-      preview2.y,
-      preview2.w,
-      preview2.h
-    );
-
-  } else {
-
-    drawPlaceholder(
-      preview2.x,
-      preview2.y,
-      preview2.w,
-      preview2.h,
-      "Choose your second image."
-    );
-  }
-
-
-  // ====================================================
-  // DRAG INSTRUCTIONS
+  // DRAG TEXT
   // ====================================================
 
   textAlign(
@@ -699,16 +1108,18 @@ function draw() {
 
   textSize(12);
 
+
   text(
     "Drag the image to adjust its position.",
     245,
-    810
+    layout.drag1Y
   );
+
 
   text(
     "Drag the image to adjust its position.",
     755,
-    810
+    layout.drag2Y
   );
 
 
@@ -723,12 +1134,12 @@ function draw() {
   text(
     "Adjust both images until you are happy with your final artwork.",
     width / 2,
-    855
+    layout.instructionY
   );
 
 
   // ====================================================
-  // FINAL IMAGE TITLE
+  // FINAL IMAGE
   // ====================================================
 
   fill(0);
@@ -738,227 +1149,480 @@ function draw() {
   text(
     "FINAL IMAGE",
     width / 2,
-    910
+    layout.finalTitleY
   );
 
 
-  // ====================================================
-  // FINAL IMAGE PREVIEW
-  // ====================================================
-
-  if (
-    resultGraphics !== null
-  ) {
-
-    drawImageContain(
-      resultGraphics,
-      50,
-      950,
-      900,
-      320
-    );
-
-  } else {
-
-    drawPlaceholder(
-      50,
-      950,
-      900,
-      320,
-      "Choose both images to create the final image."
-    );
-  }
+  drawFinalPreview();
 
 
   // ====================================================
-  // EMAIL INSTRUCTIONS
+  // EMAIL
   // ====================================================
 
   fill(80);
 
   textSize(15);
 
+  textStyle(NORMAL);
+
+
+  text(
+    "Download your image, rename the file with your nickname,",
+    width / 2,
+    layout.email1Y
+  );
+
+
+  textStyle(BOLD);
+
+
+  text(
+    "and send it to aaa@naver.com.",
+    width / 2,
+    layout.email2Y
+  );
+
+
+  textStyle(NORMAL);
+}
+
+
+// ======================================================
+// MOBILE DRAW
+// ======================================================
+
+function drawMobile() {
+
+  // ====================================================
+  // TITLE
+  // ====================================================
+
+  fill(30);
+
+  noStroke();
+
   textAlign(
     CENTER,
     CENTER
   );
 
+
+  if (width < 390) {
+
+    textSize(18);
+
+  } else {
+
+    textSize(20);
+  }
+
+
+  text(
+    "TWO IMAGES / ONE FOLDING IMAGE",
+    width / 2,
+    layout.titleY
+  );
+
+
+  fill(90);
+
+  textSize(12);
+
+  text(
+    "Combine two images into one folding artwork.",
+    width / 2,
+    layout.subtitleY
+  );
+
+
+  // ====================================================
+  // PHOTO 1 TITLE
+  // ====================================================
+
+  fill(0);
+
+  textSize(18);
+
+  text(
+    "PHOTO 1",
+    width / 2,
+    layout.photo1TitleY
+  );
+
+
+  // ====================================================
+  // PHOTO 1 FILE NAME
+  // ====================================================
+
+  textAlign(
+    LEFT,
+    CENTER
+  );
+
+  fill(110);
+
+  textSize(10);
+
+  text(
+    shortFileName(fileName1),
+    160,
+    layout.choose1Y + 15
+  );
+
+
+  // ====================================================
+  // PHOTO 1 CONTROLS
+  // ====================================================
+
+  drawMobileControlLabels(
+    1,
+    layout.bw1Y,
+    layout.zoom1Y
+  );
+
+
+  // ====================================================
+  // PHOTO 1 PREVIEW
+  // ====================================================
+
+  drawPhotoPreview(
+    processed1,
+    preview1,
+    "Choose your first image."
+  );
+
+
+  textAlign(
+    CENTER,
+    CENTER
+  );
+
+  fill(110);
+
+  textSize(11);
+
+  text(
+    "Drag the image to adjust its position.",
+    width / 2,
+    layout.drag1Y
+  );
+
+
+  // ====================================================
+  // PHOTO 2 TITLE
+  // ====================================================
+
+  fill(0);
+
+  textSize(18);
+
+  text(
+    "PHOTO 2",
+    width / 2,
+    layout.photo2TitleY
+  );
+
+
+  // ====================================================
+  // PHOTO 2 FILE NAME
+  // ====================================================
+
+  textAlign(
+    LEFT,
+    CENTER
+  );
+
+  fill(110);
+
+  textSize(10);
+
+  text(
+    shortFileName(fileName2),
+    160,
+    layout.choose2Y + 15
+  );
+
+
+  // ====================================================
+  // PHOTO 2 CONTROLS
+  // ====================================================
+
+  drawMobileControlLabels(
+    2,
+    layout.bw2Y,
+    layout.zoom2Y
+  );
+
+
+  // ====================================================
+  // PHOTO 2 PREVIEW
+  // ====================================================
+
+  drawPhotoPreview(
+    processed2,
+    preview2,
+    "Choose your second image."
+  );
+
+
+  textAlign(
+    CENTER,
+    CENTER
+  );
+
+  fill(110);
+
+  textSize(11);
+
+  text(
+    "Drag the image to adjust its position.",
+    width / 2,
+    layout.drag2Y
+  );
+
+
+  // ====================================================
+  // SHORT INSTRUCTION
+  // ====================================================
+
+  fill(100);
+
+  textSize(11);
+
+  text(
+    "Adjust both images until you are happy with your final artwork.",
+    width / 2,
+    layout.instructionY
+  );
+
+
+  // ====================================================
+  // FINAL IMAGE
+  // ====================================================
+
+  fill(0);
+
+  textSize(20);
+
+  text(
+    "FINAL IMAGE",
+    width / 2,
+    layout.finalTitleY
+  );
+
+
+  drawFinalPreview();
+
+
+  // ====================================================
+  // EMAIL
+  // ====================================================
+
+  fill(80);
+
+  textSize(12);
+
   textStyle(NORMAL);
 
-text(
-  "Download your image, rename the file with your nickname,",
-  width / 2,
-  1345
-);
+
+  text(
+    "Download your image, rename the file with your nickname,",
+    width / 2,
+    layout.email1Y
+  );
 
 
-// Second line - bold
-textStyle(BOLD);
-
-text(
-  "and send it to aaa@naver.com.",
-  width / 2,
-  1367
-);
+  textStyle(BOLD);
 
 
-// Return to normal
-textStyle(NORMAL);
+  text(
+    "and send it to aaa@naver.com.",
+    width / 2,
+    layout.email2Y
+  );
+
+
+  textStyle(NORMAL);
 }
 
 
 // ======================================================
-// MOUSE PRESSED
+// MOBILE CONTROL LABELS
 // ======================================================
 
-function mousePressed() {
+function drawMobileControlLabels(
+  photoNumber,
+  bwY,
+  zoomY
+) {
 
-  // PHOTO 1
-
-  if (
-
-    img1 !== null &&
-
-    mouseX >= preview1.x &&
-    mouseX <= preview1.x + preview1.w &&
-
-    mouseY >= preview1.y &&
-    mouseY <= preview1.y + preview1.h
-
-  ) {
-
-    draggingPhoto = 1;
-
-    lastMouseX = mouseX;
-    lastMouseY = mouseY;
-
-    return;
-  }
+  let thresholdValue =
+    photoNumber === 1
+      ? threshold1
+      : threshold2;
 
 
-  // PHOTO 2
+  let zoomValue =
+    photoNumber === 1
+      ? zoom1
+      : zoom2;
 
-  if (
 
-    img2 !== null &&
+  textAlign(
+    LEFT,
+    CENTER
+  );
 
-    mouseX >= preview2.x &&
-    mouseX <= preview2.x + preview2.w &&
 
-    mouseY >= preview2.y &&
-    mouseY <= preview2.y + preview2.h
+  fill(50);
 
-  ) {
+  textSize(12);
 
-    draggingPhoto = 2;
 
-    lastMouseX = mouseX;
-    lastMouseY = mouseY;
+  text(
+    "Black & White",
+    20,
+    bwY
+  );
+
+
+  text(
+    "Zoom",
+    20,
+    zoomY
+  );
+
+
+  textAlign(
+    RIGHT,
+    CENTER
+  );
+
+
+  text(
+    thresholdValue,
+    width - 15,
+    bwY
+  );
+
+
+  text(
+    zoomValue.toFixed(2) + "×",
+    width - 15,
+    zoomY
+  );
+
+
+  textAlign(
+    LEFT,
+    CENTER
+  );
+
+
+  fill(120);
+
+  textSize(9);
+
+
+  text(
+    "Adjust the amount of black",
+    155,
+    bwY + 19
+  );
+
+
+  text(
+    "Enlarge the image",
+    155,
+    zoomY + 19
+  );
+}
+
+
+// ======================================================
+// PHOTO PREVIEW
+// ======================================================
+
+function drawPhotoPreview(
+  processed,
+  preview,
+  placeholder
+) {
+
+  if (processed !== null) {
+
+    drawImageExact(
+      processed,
+      preview.x,
+      preview.y,
+      preview.w,
+      preview.h
+    );
+
+  } else {
+
+    drawPlaceholder(
+      preview.x,
+      preview.y,
+      preview.w,
+      preview.h,
+      placeholder
+    );
   }
 }
 
 
 // ======================================================
-// MOUSE DRAGGED
+// FINAL PREVIEW
 // ======================================================
 
-function mouseDragged() {
+function drawFinalPreview() {
 
-  if (
-    draggingPhoto === 0
-  ) {
+  if (resultGraphics !== null) {
 
-    return;
+    drawImageContain(
+      resultGraphics,
+      layout.finalX,
+      layout.finalY,
+      layout.finalW,
+      layout.finalH
+    );
+
+  } else {
+
+    drawPlaceholder(
+      layout.finalX,
+      layout.finalY,
+      layout.finalW,
+      layout.finalH,
+      "Choose both images to create the final image."
+    );
   }
-
-
-  let dx =
-    mouseX -
-    lastMouseX;
-
-
-  let dy =
-    mouseY -
-    lastMouseY;
-
-
-  // Convert preview movement
-  // to working image coordinates
-
-  let scaleX =
-    workW /
-    preview1.w;
-
-
-  let scaleY =
-    workH /
-    preview1.h;
-
-
-  // PHOTO 1
-
-  if (
-    draggingPhoto === 1
-  ) {
-
-    offsetX1 +=
-      dx *
-      scaleX;
-
-
-    offsetY1 +=
-      dy *
-      scaleY;
-
-
-    updatePhoto1();
-  }
-
-
-  // PHOTO 2
-
-  if (
-    draggingPhoto === 2
-  ) {
-
-    offsetX2 +=
-      dx *
-      scaleX;
-
-
-    offsetY2 +=
-      dy *
-      scaleY;
-
-
-    updatePhoto2();
-  }
-
-
-  lastMouseX =
-    mouseX;
-
-
-  lastMouseY =
-    mouseY;
-
-
-  return false;
 }
 
 
 // ======================================================
-// MOUSE RELEASED
+// SHORT FILE NAME
 // ======================================================
 
-function mouseReleased() {
+function shortFileName(name) {
 
-  draggingPhoto = 0;
+  if (name.length <= 22) {
+
+    return name;
+  }
+
+
+  return (
+    name.substring(0, 18) +
+    "..."
+  );
 }
 
 
 // ======================================================
-// PHOTO 1 FILE
+// FILE 1
 // ======================================================
 
 function handleFile1(file) {
@@ -1003,7 +1667,7 @@ function handleFile1(file) {
 
 
 // ======================================================
-// PHOTO 2 FILE
+// FILE 2
 // ======================================================
 
 function handleFile2(file) {
@@ -1044,6 +1708,58 @@ function handleFile2(file) {
       updatePhoto2();
     }
   );
+}
+
+
+// ======================================================
+// SCHEDULE UPDATE
+// Helps mobile performance
+// ======================================================
+
+function schedulePhotoUpdate(
+  photoNumber
+) {
+
+  let delay =
+    isMobile
+      ? 120
+      : 40;
+
+
+  if (photoNumber === 1) {
+
+    clearTimeout(
+      updateTimer1
+    );
+
+
+    updateTimer1 =
+      setTimeout(
+        function () {
+
+          updatePhoto1();
+
+        },
+        delay
+      );
+
+  } else {
+
+    clearTimeout(
+      updateTimer2
+    );
+
+
+    updateTimer2 =
+      setTimeout(
+        function () {
+
+          updatePhoto2();
+
+        },
+        delay
+      );
+  }
 }
 
 
@@ -1132,7 +1848,7 @@ function makeA4Image(
 
 
   // ====================================================
-  // COVER
+  // COVER SCALE
   // ====================================================
 
   let baseScale =
@@ -1184,6 +1900,26 @@ function makeA4Image(
     offsetY;
 
 
+  // ====================================================
+  // PREVENT EMPTY WHITE GAPS
+  // ====================================================
+
+  x =
+    constrain(
+      x,
+      workW - newW,
+      0
+    );
+
+
+  y =
+    constrain(
+      y,
+      workH - newH,
+      0
+    );
+
+
   temp.image(
     sourceImg,
     x,
@@ -1194,7 +1930,7 @@ function makeA4Image(
 
 
   // ====================================================
-  // BINARY BLACK & WHITE
+  // BLACK & WHITE
   // ====================================================
 
   temp.filter(
@@ -1325,8 +2061,6 @@ function makeCombinedImage() {
   }
 
 
-  // Add short scoring marks
-
   drawCutMarks(
     resultGraphics
   );
@@ -1367,7 +2101,7 @@ function drawCutMarks(g) {
       panelW;
 
 
-    // Top mark
+    // TOP
 
     g.line(
       x,
@@ -1377,7 +2111,7 @@ function drawCutMarks(g) {
     );
 
 
-    // Bottom mark
+    // BOTTOM
 
     g.line(
       x,
@@ -1390,6 +2124,301 @@ function drawCutMarks(g) {
 
 
   g.pop();
+}
+
+
+// ======================================================
+// DRAG START
+// ======================================================
+
+function beginDragAt(
+  pointerX,
+  pointerY
+) {
+
+  if (
+    img1 !== null &&
+    pointInsidePreview(
+      pointerX,
+      pointerY,
+      preview1
+    )
+  ) {
+
+    draggingPhoto = 1;
+
+    lastPointerX =
+      pointerX;
+
+    lastPointerY =
+      pointerY;
+
+    return true;
+  }
+
+
+  if (
+    img2 !== null &&
+    pointInsidePreview(
+      pointerX,
+      pointerY,
+      preview2
+    )
+  ) {
+
+    draggingPhoto = 2;
+
+    lastPointerX =
+      pointerX;
+
+    lastPointerY =
+      pointerY;
+
+    return true;
+  }
+
+
+  return false;
+}
+
+
+// ======================================================
+// DRAG MOVE
+// ======================================================
+
+function dragTo(
+  pointerX,
+  pointerY
+) {
+
+  if (
+    draggingPhoto === 0
+  ) {
+
+    return false;
+  }
+
+
+  let dx =
+    pointerX -
+    lastPointerX;
+
+
+  let dy =
+    pointerY -
+    lastPointerY;
+
+
+  let activePreview =
+    draggingPhoto === 1
+      ? preview1
+      : preview2;
+
+
+  let scaleX =
+    workW /
+    activePreview.w;
+
+
+  let scaleY =
+    workH /
+    activePreview.h;
+
+
+  if (
+    draggingPhoto === 1
+  ) {
+
+    offsetX1 +=
+      dx *
+      scaleX;
+
+
+    offsetY1 +=
+      dy *
+      scaleY;
+
+
+    schedulePhotoUpdate(1);
+
+  } else {
+
+    offsetX2 +=
+      dx *
+      scaleX;
+
+
+    offsetY2 +=
+      dy *
+      scaleY;
+
+
+    schedulePhotoUpdate(2);
+  }
+
+
+  lastPointerX =
+    pointerX;
+
+
+  lastPointerY =
+    pointerY;
+
+
+  return true;
+}
+
+
+// ======================================================
+// DRAG END
+// ======================================================
+
+function endDrag() {
+
+  let finishedPhoto =
+    draggingPhoto;
+
+
+  draggingPhoto = 0;
+
+
+  // Ensure final high-resolution update
+
+  if (finishedPhoto === 1) {
+
+    clearTimeout(
+      updateTimer1
+    );
+
+    updatePhoto1();
+
+  } else if (
+    finishedPhoto === 2
+  ) {
+
+    clearTimeout(
+      updateTimer2
+    );
+
+    updatePhoto2();
+  }
+}
+
+
+// ======================================================
+// POINT INSIDE PREVIEW
+// ======================================================
+
+function pointInsidePreview(
+  px,
+  py,
+  preview
+) {
+
+  return (
+
+    px >= preview.x &&
+
+    px <=
+      preview.x +
+      preview.w &&
+
+    py >= preview.y &&
+
+    py <=
+      preview.y +
+      preview.h
+
+  );
+}
+
+
+// ======================================================
+// DESKTOP MOUSE
+// ======================================================
+
+function mousePressed() {
+
+  beginDragAt(
+    mouseX,
+    mouseY
+  );
+}
+
+
+function mouseDragged() {
+
+  if (
+    dragTo(
+      mouseX,
+      mouseY
+    )
+  ) {
+
+    return false;
+  }
+}
+
+
+function mouseReleased() {
+
+  endDrag();
+}
+
+
+// ======================================================
+// MOBILE TOUCH
+// ======================================================
+
+function touchStarted() {
+
+  if (
+    touches.length > 0
+  ) {
+
+    let started =
+      beginDragAt(
+        touches[0].x,
+        touches[0].y
+      );
+
+
+    if (started) {
+
+      return false;
+    }
+  }
+}
+
+
+function touchMoved() {
+
+  if (
+    draggingPhoto !== 0 &&
+    touches.length > 0
+  ) {
+
+    dragTo(
+      touches[0].x,
+      touches[0].y
+    );
+
+
+    return false;
+  }
+}
+
+
+function touchEnded() {
+
+  if (
+    draggingPhoto !== 0
+  ) {
+
+    endDrag();
+
+    return false;
+  }
 }
 
 
@@ -1536,7 +2565,14 @@ function drawPlaceholder(
   );
 
 
-  textSize(15);
+  if (isMobile) {
+
+    textSize(13);
+
+  } else {
+
+    textSize(15);
+  }
 
 
   text(
@@ -1571,4 +2607,14 @@ function saveFinalImage() {
     resultGraphics,
     "folding_image.png"
   );
+}
+
+
+// ======================================================
+// WINDOW RESIZE / ORIENTATION CHANGE
+// ======================================================
+
+function windowResized() {
+
+  applyResponsiveLayout();
 }
