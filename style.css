@@ -3,6 +3,7 @@ html {
   padding: 0;
 
   width: 100%;
+  min-height: 100%;
 
   overflow-x: hidden;
   overflow-y: auto;
@@ -14,6 +15,7 @@ body {
   padding: 0;
 
   width: 100%;
+  min-height: 100%;
 
   background: #f8f8f8;
 
@@ -45,8 +47,7 @@ canvas {
 
   max-width: 100%;
 
-  /* Allow normal vertical page scrolling */
-  touch-action: pan-y;
+  touch-action: auto;
 }
 
 
@@ -55,6 +56,7 @@ canvas {
    ====================================================== */
 
 button {
+
   font-family:
     Arial,
     Helvetica,
@@ -62,16 +64,17 @@ button {
 
   -webkit-tap-highlight-color:
     transparent;
+
 }
 
 
 /* ======================================================
-   SLIDERS
+   RANGE SLIDERS
    ====================================================== */
 
 input[type="range"] {
 
-  touch-action: manipulation;
+  cursor: pointer;
 
 }
 
@@ -103,11 +106,13 @@ input[type="range"] {
 
   canvas {
 
-    width: 100%;
-
-    height: auto;
-
     display: block;
+
+    margin: 0;
+
+    max-width: 100%;
+
+    touch-action: auto;
 
   }
 
