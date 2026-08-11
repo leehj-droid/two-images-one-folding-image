@@ -1,6 +1,16 @@
 // ======================================================
 // TWO IMAGES / ONE FOLDING IMAGE
+//
 // RESPONSIVE DESKTOP + MOBILE VERSION
+//
+// Controls:
+// Black & White
+// Zoom
+// Move X
+// Move Y
+//
+// No mouse/touch image dragging.
+// This allows normal mobile page scrolling.
 // ======================================================
 
 
@@ -45,7 +55,7 @@ let lastLayoutWidth = 0;
 const mobileBreakpoint = 700;
 
 const desktopW = 1000;
-const desktopH = 1420;
+const desktopH = 1490;
 
 
 // ======================================================
@@ -54,14 +64,14 @@ const desktopH = 1420;
 
 let preview1 = {
   x: 70,
-  y: 290,
+  y: 370,
   w: 350,
   h: 495
 };
 
 let preview2 = {
   x: 580,
-  y: 290,
+  y: 370,
   w: 350,
   h: 495
 };
@@ -72,16 +82,6 @@ let preview2 = {
 // ======================================================
 
 let layout = {};
-
-
-// ======================================================
-// DRAGGING
-// ======================================================
-
-let draggingPhoto = 0;
-
-let lastPointerX = 0;
-let lastPointerY = 0;
 
 
 // ======================================================
@@ -111,11 +111,17 @@ let thresholdSlider2;
 let zoomSlider1;
 let zoomSlider2;
 
+let moveXSlider1;
+let moveXSlider2;
+
+let moveYSlider1;
+let moveYSlider2;
+
 let saveButton;
 
 
 // ======================================================
-// FINAL IMAGE SIZE
+// WORKING SIZE
 //
 // Each source image:
 // A4 portrait ratio
@@ -129,12 +135,23 @@ const workW = 1240;
 const workH = 1754;
 
 
-// 8 slices per source image
+// Fixed number of slices
 const numSlices = 8;
 
 
 // ======================================================
-// TOP / BOTTOM MARKS
+// MOVEMENT RANGE
+// ======================================================
+
+const moveXMin = -600;
+const moveXMax = 600;
+
+const moveYMin = -800;
+const moveYMax = 800;
+
+
+// ======================================================
+// TOP / BOTTOM SCORING MARKS
 //
 // approx. 1 cm
 // ======================================================
@@ -151,28 +168,19 @@ function setup() {
   isMobile =
     windowWidth <= mobileBreakpoint;
 
-
   lastLayoutWidth =
     windowWidth;
 
 
-  let initialW;
-
-  if (isMobile) {
-
-    initialW =
-      min(windowWidth, 520);
-
-  } else {
-
-    initialW =
-      desktopW;
-  }
+  let initialW =
+    isMobile
+      ? min(windowWidth, 520)
+      : desktopW;
 
 
   createCanvas(
     initialW,
-    isMobile ? 2300 : desktopH
+    isMobile ? 2800 : desktopH
   );
 
 
@@ -180,7 +188,7 @@ function setup() {
 
 
   // ====================================================
-  // FILE INPUT 1
+  // PHOTO 1 FILE INPUT
   // ====================================================
 
   fileInput1 =
@@ -195,7 +203,6 @@ function setup() {
     createButton(
       "CHOOSE IMAGE"
     );
-
 
   styleChooseButton(
     chooseButton1
@@ -262,7 +269,57 @@ function setup() {
 
 
   // ====================================================
-  // FILE INPUT 2
+  // PHOTO 1 MOVE X
+  // ====================================================
+
+  moveXSlider1 =
+    createSlider(
+      moveXMin,
+      moveXMax,
+      0,
+      10
+    );
+
+
+  moveXSlider1.input(
+    function () {
+
+      offsetX1 =
+        moveXSlider1.value();
+
+      schedulePhotoUpdate(1);
+
+    }
+  );
+
+
+  // ====================================================
+  // PHOTO 1 MOVE Y
+  // ====================================================
+
+  moveYSlider1 =
+    createSlider(
+      moveYMin,
+      moveYMax,
+      0,
+      10
+    );
+
+
+  moveYSlider1.input(
+    function () {
+
+      offsetY1 =
+        moveYSlider1.value();
+
+      schedulePhotoUpdate(1);
+
+    }
+  );
+
+
+  // ====================================================
+  // PHOTO 2 FILE INPUT
   // ====================================================
 
   fileInput2 =
@@ -277,7 +334,6 @@ function setup() {
     createButton(
       "CHOOSE IMAGE"
     );
-
 
   styleChooseButton(
     chooseButton2
@@ -344,6 +400,56 @@ function setup() {
 
 
   // ====================================================
+  // PHOTO 2 MOVE X
+  // ====================================================
+
+  moveXSlider2 =
+    createSlider(
+      moveXMin,
+      moveXMax,
+      0,
+      10
+    );
+
+
+  moveXSlider2.input(
+    function () {
+
+      offsetX2 =
+        moveXSlider2.value();
+
+      schedulePhotoUpdate(2);
+
+    }
+  );
+
+
+  // ====================================================
+  // PHOTO 2 MOVE Y
+  // ====================================================
+
+  moveYSlider2 =
+    createSlider(
+      moveYMin,
+      moveYMax,
+      0,
+      10
+    );
+
+
+  moveYSlider2.input(
+    function () {
+
+      offsetY2 =
+        moveYSlider2.value();
+
+      schedulePhotoUpdate(2);
+
+    }
+  );
+
+
+  // ====================================================
   // DOWNLOAD BUTTON
   // ====================================================
 
@@ -390,7 +496,6 @@ function setup() {
 
 
   applyResponsiveLayout();
-
 
   noLoop();
 }
@@ -471,7 +576,7 @@ function setDesktopLayout() {
 
   preview1 = {
     x: 70,
-    y: 290,
+    y: 370,
     w: 350,
     h: 495
   };
@@ -479,7 +584,7 @@ function setDesktopLayout() {
 
   preview2 = {
     x: 580,
-    y: 290,
+    y: 370,
     w: 350,
     h: 495
   };
@@ -499,28 +604,33 @@ function setDesktopLayout() {
 
     bw1Y: 175,
     zoom1Y: 225,
+    moveX1Y: 275,
+    moveY1Y: 325,
 
     bw2Y: 175,
     zoom2Y: 225,
+    moveX2Y: 275,
+    moveY2Y: 325,
 
-    drag1Y: 810,
-    drag2Y: 810,
+    instructionY: 900,
 
-    instructionY: 855,
-
-    finalTitleY: 910,
+    finalTitleY: 950,
 
     finalX: 50,
-    finalY: 950,
+    finalY: 990,
     finalW: 900,
     finalH: 320,
 
-    downloadY: 1295,
+    downloadY: 1345,
 
-    email1Y: 1345,
-    email2Y: 1367
+    email1Y: 1395,
+    email2Y: 1419
   };
 
+
+  // ====================================================
+  // PHOTO 1 CONTROLS
+  // ====================================================
 
   chooseButton1.position(
     70,
@@ -528,25 +638,37 @@ function setDesktopLayout() {
   );
 
 
-  thresholdSlider1.position(
+  positionDesktopSlider(
+    thresholdSlider1,
     165,
-    165
-  );
-
-  thresholdSlider1.size(
-    170
+    layout.bw1Y
   );
 
 
-  zoomSlider1.position(
+  positionDesktopSlider(
+    zoomSlider1,
     165,
-    215
+    layout.zoom1Y
   );
 
-  zoomSlider1.size(
-    170
+
+  positionDesktopSlider(
+    moveXSlider1,
+    165,
+    layout.moveX1Y
   );
 
+
+  positionDesktopSlider(
+    moveYSlider1,
+    165,
+    layout.moveY1Y
+  );
+
+
+  // ====================================================
+  // PHOTO 2 CONTROLS
+  // ====================================================
 
   chooseButton2.position(
     580,
@@ -554,29 +676,62 @@ function setDesktopLayout() {
   );
 
 
-  thresholdSlider2.position(
+  positionDesktopSlider(
+    thresholdSlider2,
     675,
-    165
-  );
-
-  thresholdSlider2.size(
-    170
+    layout.bw2Y
   );
 
 
-  zoomSlider2.position(
+  positionDesktopSlider(
+    zoomSlider2,
     675,
-    215
+    layout.zoom2Y
   );
 
-  zoomSlider2.size(
-    170
+
+  positionDesktopSlider(
+    moveXSlider2,
+    675,
+    layout.moveX2Y
   );
 
+
+  positionDesktopSlider(
+    moveYSlider2,
+    675,
+    layout.moveY2Y
+  );
+
+
+  // ====================================================
+  // DOWNLOAD
+  // ====================================================
 
   saveButton.position(
     width / 2,
     layout.downloadY
+  );
+}
+
+
+// ======================================================
+// DESKTOP SLIDER POSITION
+// ======================================================
+
+function positionDesktopSlider(
+  slider,
+  x,
+  centerY
+) {
+
+  slider.position(
+    x,
+    centerY - 10
+  );
+
+  slider.size(
+    170
   );
 }
 
@@ -617,7 +772,11 @@ function setMobileLayout() {
 
   let zoom1Y = 295;
 
-  let preview1Y = 365;
+  let moveX1Y = 365;
+
+  let moveY1Y = 435;
+
+  let preview1Y = 505;
 
 
   preview1 = {
@@ -630,10 +789,9 @@ function setMobileLayout() {
   };
 
 
-  let drag1Y =
+  let photo1End =
     preview1.y +
-    preview1.h +
-    25;
+    preview1.h;
 
 
   // ====================================================
@@ -641,8 +799,8 @@ function setMobileLayout() {
   // ====================================================
 
   let photo2TitleY =
-    drag1Y +
-    85;
+    photo1End +
+    70;
 
 
   let choose2Y =
@@ -660,9 +818,19 @@ function setMobileLayout() {
     180;
 
 
-  let preview2Y =
+  let moveX2Y =
     photo2TitleY +
     250;
+
+
+  let moveY2Y =
+    photo2TitleY +
+    320;
+
+
+  let preview2Y =
+    photo2TitleY +
+    390;
 
 
   preview2 = {
@@ -675,10 +843,9 @@ function setMobileLayout() {
   };
 
 
-  let drag2Y =
+  let photo2End =
     preview2.y +
-    preview2.h +
-    25;
+    preview2.h;
 
 
   // ====================================================
@@ -686,13 +853,13 @@ function setMobileLayout() {
   // ====================================================
 
   let instructionY =
-    drag2Y +
+    photo2End +
     55;
 
 
   let finalTitleY =
     instructionY +
-    60;
+    55;
 
 
   let finalY =
@@ -728,7 +895,7 @@ function setMobileLayout() {
 
   let mobileCanvasH =
     email2Y +
-    70;
+    75;
 
 
   resizeCanvas(
@@ -750,12 +917,13 @@ function setMobileLayout() {
 
     bw1Y: bw1Y,
     zoom1Y: zoom1Y,
+    moveX1Y: moveX1Y,
+    moveY1Y: moveY1Y,
 
     bw2Y: bw2Y,
     zoom2Y: zoom2Y,
-
-    drag1Y: drag1Y,
-    drag2Y: drag2Y,
+    moveX2Y: moveX2Y,
+    moveY2Y: moveY2Y,
 
     instructionY: instructionY,
 
@@ -774,8 +942,19 @@ function setMobileLayout() {
 
 
   // ====================================================
-  // PHOTO 1 DOM CONTROLS
+  // MOBILE SLIDER DIMENSIONS
   // ====================================================
+
+  let sliderX = 155;
+
+  let sliderW =
+    max(
+      110,
+      mobileW - 220
+    );
+
+
+  // PHOTO 1
 
   chooseButton1.position(
     margin,
@@ -783,35 +962,39 @@ function setMobileLayout() {
   );
 
 
-  thresholdSlider1.position(
-    165,
-    bw1Y - 10
-  );
-
-  thresholdSlider1.size(
-    max(
-      120,
-      mobileW - 220
-    )
+  positionMobileSlider(
+    thresholdSlider1,
+    sliderX,
+    bw1Y,
+    sliderW
   );
 
 
-  zoomSlider1.position(
-    165,
-    zoom1Y - 10
-  );
-
-  zoomSlider1.size(
-    max(
-      120,
-      mobileW - 220
-    )
+  positionMobileSlider(
+    zoomSlider1,
+    sliderX,
+    zoom1Y,
+    sliderW
   );
 
 
-  // ====================================================
-  // PHOTO 2 DOM CONTROLS
-  // ====================================================
+  positionMobileSlider(
+    moveXSlider1,
+    sliderX,
+    moveX1Y,
+    sliderW
+  );
+
+
+  positionMobileSlider(
+    moveYSlider1,
+    sliderX,
+    moveY1Y,
+    sliderW
+  );
+
+
+  // PHOTO 2
 
   chooseButton2.position(
     margin,
@@ -819,39 +1002,65 @@ function setMobileLayout() {
   );
 
 
-  thresholdSlider2.position(
-    165,
-    bw2Y - 10
-  );
-
-  thresholdSlider2.size(
-    max(
-      120,
-      mobileW - 220
-    )
+  positionMobileSlider(
+    thresholdSlider2,
+    sliderX,
+    bw2Y,
+    sliderW
   );
 
 
-  zoomSlider2.position(
-    165,
-    zoom2Y - 10
-  );
-
-  zoomSlider2.size(
-    max(
-      120,
-      mobileW - 220
-    )
+  positionMobileSlider(
+    zoomSlider2,
+    sliderX,
+    zoom2Y,
+    sliderW
   );
 
 
-  // ====================================================
+  positionMobileSlider(
+    moveXSlider2,
+    sliderX,
+    moveX2Y,
+    sliderW
+  );
+
+
+  positionMobileSlider(
+    moveYSlider2,
+    sliderX,
+    moveY2Y,
+    sliderW
+  );
+
+
   // DOWNLOAD
-  // ====================================================
 
   saveButton.position(
     mobileW / 2,
     downloadY
+  );
+}
+
+
+// ======================================================
+// MOBILE SLIDER POSITION
+// ======================================================
+
+function positionMobileSlider(
+  slider,
+  x,
+  centerY,
+  sliderW
+) {
+
+  slider.position(
+    x,
+    centerY - 10
+  );
+
+  slider.size(
+    sliderW
   );
 }
 
@@ -877,10 +1086,14 @@ function draw() {
 
 
 // ======================================================
-// DESKTOP
+// DESKTOP DRAW
 // ======================================================
 
 function drawDesktop() {
+
+  // ====================================================
+  // TITLE
+  // ====================================================
 
   fill(30);
 
@@ -968,55 +1181,14 @@ function drawDesktop() {
   // PHOTO 1 CONTROLS
   // ====================================================
 
-  fill(50);
-
-  textSize(13);
-
-
-  text(
-    "Black & White",
+  drawDesktopControls(
+    1,
     70,
-    layout.bw1Y
-  );
-
-
-  text(
-    "Zoom",
-    70,
-    layout.zoom1Y
-  );
-
-
-  text(
-    threshold1,
     350,
-    layout.bw1Y
-  );
-
-
-  text(
-    zoom1.toFixed(2) + "×",
-    350,
-    layout.zoom1Y
-  );
-
-
-  fill(120);
-
-  textSize(11);
-
-
-  text(
-    "Adjust the amount of black",
-    350,
-    layout.bw1Y + 15
-  );
-
-
-  text(
-    "Enlarge the image",
-    350,
-    layout.zoom1Y + 15
+    layout.bw1Y,
+    layout.zoom1Y,
+    layout.moveX1Y,
+    layout.moveY1Y
   );
 
 
@@ -1024,60 +1196,19 @@ function drawDesktop() {
   // PHOTO 2 CONTROLS
   // ====================================================
 
-  fill(50);
-
-  textSize(13);
-
-
-  text(
-    "Black & White",
+  drawDesktopControls(
+    2,
     580,
-    layout.bw2Y
-  );
-
-
-  text(
-    "Zoom",
-    580,
-    layout.zoom2Y
-  );
-
-
-  text(
-    threshold2,
     860,
-    layout.bw2Y
-  );
-
-
-  text(
-    zoom2.toFixed(2) + "×",
-    860,
-    layout.zoom2Y
-  );
-
-
-  fill(120);
-
-  textSize(11);
-
-
-  text(
-    "Adjust the amount of black",
-    860,
-    layout.bw2Y + 15
-  );
-
-
-  text(
-    "Enlarge the image",
-    860,
-    layout.zoom2Y + 15
+    layout.bw2Y,
+    layout.zoom2Y,
+    layout.moveX2Y,
+    layout.moveY2Y
   );
 
 
   // ====================================================
-  // PREVIEWS
+  // PHOTO PREVIEWS
   // ====================================================
 
   drawPhotoPreview(
@@ -1094,29 +1225,14 @@ function drawDesktop() {
   );
 
 
+  // ====================================================
+  // INSTRUCTION
+  // ====================================================
+
   textAlign(
     CENTER,
     CENTER
   );
-
-  fill(110);
-
-  textSize(12);
-
-
-  text(
-    "Drag the image to adjust its position.",
-    245,
-    layout.drag1Y
-  );
-
-
-  text(
-    "Drag the image to adjust its position.",
-    755,
-    layout.drag2Y
-  );
-
 
   fill(100);
 
@@ -1131,7 +1247,7 @@ function drawDesktop() {
 
 
   // ====================================================
-  // FINAL
+  // FINAL IMAGE
   // ====================================================
 
   fill(0);
@@ -1153,36 +1269,143 @@ function drawDesktop() {
   // EMAIL
   // ====================================================
 
-  fill(80);
-
-  textSize(15);
-
-  textStyle(NORMAL);
-
-
-  text(
-    "Download your image, rename the file with your nickname,",
-    width / 2,
-    layout.email1Y
+  drawEmailInstructions(
+    15
   );
-
-
-  textStyle(BOLD);
-
-
-  text(
-    "and send it to aaa@naver.com.",
-    width / 2,
-    layout.email2Y
-  );
-
-
-  textStyle(NORMAL);
 }
 
 
 // ======================================================
-// MOBILE
+// DESKTOP CONTROL LABELS
+// ======================================================
+
+function drawDesktopControls(
+  photoNumber,
+  labelX,
+  valueX,
+  bwY,
+  zoomY,
+  moveXY,
+  moveYY
+) {
+
+  let values =
+    getPhotoValues(
+      photoNumber
+    );
+
+
+  textAlign(
+    LEFT,
+    CENTER
+  );
+
+
+  fill(50);
+
+  textSize(13);
+
+
+  text(
+    "Black & White",
+    labelX,
+    bwY
+  );
+
+
+  text(
+    "Zoom",
+    labelX,
+    zoomY
+  );
+
+
+  text(
+    "Move X",
+    labelX,
+    moveXY
+  );
+
+
+  text(
+    "Move Y",
+    labelX,
+    moveYY
+  );
+
+
+  // VALUES
+
+  text(
+    values.threshold,
+    valueX,
+    bwY
+  );
+
+
+  text(
+    values.zoom.toFixed(2) + "×",
+    valueX,
+    zoomY
+  );
+
+
+  text(
+    formatMoveValue(
+      values.x
+    ),
+    valueX,
+    moveXY
+  );
+
+
+  text(
+    formatMoveValue(
+      values.y
+    ),
+    valueX,
+    moveYY
+  );
+
+
+  // HELP TEXT
+
+  fill(120);
+
+  textSize(10);
+
+
+  text(
+    "Adjust the amount of black",
+    valueX,
+    bwY + 15
+  );
+
+
+  text(
+    "Enlarge the image",
+    valueX,
+    zoomY + 15
+  );
+
+
+  text(
+    "← Left / Right →",
+    valueX,
+    moveXY + 15
+  );
+
+
+  text(
+    "↑ Up / Down ↓",
+    valueX,
+    moveYY + 15
+  );
+}
+
+
+// ======================================================
+// MOBILE DRAW
 // ======================================================
 
 function drawMobile() {
@@ -1234,63 +1457,18 @@ function drawMobile() {
   // PHOTO 1
   // ====================================================
 
-  fill(0);
-
-  textSize(18);
-
-
-  text(
-    "PHOTO 1",
-    width / 2,
-    layout.photo1TitleY
-  );
-
-
-  textAlign(
-    LEFT,
-    CENTER
-  );
-
-  fill(110);
-
-  textSize(10);
-
-
-  text(
-    shortFileName(fileName1),
-    170,
-    layout.choose1Y + 15
-  );
-
-
-  drawMobileControlLabels(
+  drawMobilePhotoSection(
     1,
-    layout.bw1Y,
-    layout.zoom1Y
-  );
-
-
-  drawPhotoPreview(
+    fileName1,
     processed1,
     preview1,
+    layout.photo1TitleY,
+    layout.choose1Y,
+    layout.bw1Y,
+    layout.zoom1Y,
+    layout.moveX1Y,
+    layout.moveY1Y,
     "Choose your first image."
-  );
-
-
-  textAlign(
-    CENTER,
-    CENTER
-  );
-
-  fill(110);
-
-  textSize(11);
-
-
-  text(
-    "Drag the image to adjust its position.",
-    width / 2,
-    layout.drag1Y
   );
 
 
@@ -1298,69 +1476,29 @@ function drawMobile() {
   // PHOTO 2
   // ====================================================
 
-  fill(0);
-
-  textSize(18);
-
-
-  text(
-    "PHOTO 2",
-    width / 2,
-    layout.photo2TitleY
-  );
-
-
-  textAlign(
-    LEFT,
-    CENTER
-  );
-
-  fill(110);
-
-  textSize(10);
-
-
-  text(
-    shortFileName(fileName2),
-    170,
-    layout.choose2Y + 15
-  );
-
-
-  drawMobileControlLabels(
+  drawMobilePhotoSection(
     2,
-    layout.bw2Y,
-    layout.zoom2Y
-  );
-
-
-  drawPhotoPreview(
+    fileName2,
     processed2,
     preview2,
+    layout.photo2TitleY,
+    layout.choose2Y,
+    layout.bw2Y,
+    layout.zoom2Y,
+    layout.moveX2Y,
+    layout.moveY2Y,
     "Choose your second image."
-  );
-
-
-  textAlign(
-    CENTER,
-    CENTER
-  );
-
-  fill(110);
-
-  textSize(11);
-
-
-  text(
-    "Drag the image to adjust its position.",
-    width / 2,
-    layout.drag2Y
   );
 
 
   // ====================================================
   // INSTRUCTION
   // ====================================================
+
+  textAlign(
+    CENTER,
+    CENTER
+  );
 
   fill(100);
 
@@ -1375,7 +1513,7 @@ function drawMobile() {
 
 
   // ====================================================
-  // FINAL
+  // FINAL IMAGE
   // ====================================================
 
   fill(0);
@@ -1397,9 +1535,294 @@ function drawMobile() {
   // EMAIL
   // ====================================================
 
-  fill(80);
+  drawEmailInstructions(
+    12
+  );
+}
+
+
+// ======================================================
+// MOBILE PHOTO SECTION
+// ======================================================
+
+function drawMobilePhotoSection(
+  photoNumber,
+  fileName,
+  processed,
+  preview,
+  titleY,
+  chooseY,
+  bwY,
+  zoomY,
+  moveXY,
+  moveYY,
+  placeholder
+) {
+
+  // TITLE
+
+  textAlign(
+    CENTER,
+    CENTER
+  );
+
+  fill(0);
+
+  textSize(18);
+
+
+  text(
+    "PHOTO " + photoNumber,
+    width / 2,
+    titleY
+  );
+
+
+  // FILE NAME
+
+  textAlign(
+    LEFT,
+    CENTER
+  );
+
+  fill(110);
+
+  textSize(10);
+
+
+  text(
+    shortFileName(fileName),
+    170,
+    chooseY + 15
+  );
+
+
+  // CONTROLS
+
+  drawMobileControls(
+    photoNumber,
+    bwY,
+    zoomY,
+    moveXY,
+    moveYY
+  );
+
+
+  // PREVIEW
+
+  drawPhotoPreview(
+    processed,
+    preview,
+    placeholder
+  );
+}
+
+
+// ======================================================
+// MOBILE CONTROLS
+// ======================================================
+
+function drawMobileControls(
+  photoNumber,
+  bwY,
+  zoomY,
+  moveXY,
+  moveYY
+) {
+
+  let values =
+    getPhotoValues(
+      photoNumber
+    );
+
+
+  // LABELS
+
+  textAlign(
+    LEFT,
+    CENTER
+  );
+
+  fill(50);
 
   textSize(12);
+
+
+  text(
+    "Black & White",
+    20,
+    bwY
+  );
+
+
+  text(
+    "Zoom",
+    20,
+    zoomY
+  );
+
+
+  text(
+    "Move X",
+    20,
+    moveXY
+  );
+
+
+  text(
+    "Move Y",
+    20,
+    moveYY
+  );
+
+
+  // VALUES
+
+  textAlign(
+    RIGHT,
+    CENTER
+  );
+
+
+  text(
+    values.threshold,
+    width - 15,
+    bwY
+  );
+
+
+  text(
+    values.zoom.toFixed(2) + "×",
+    width - 15,
+    zoomY
+  );
+
+
+  text(
+    formatMoveValue(
+      values.x
+    ),
+    width - 15,
+    moveXY
+  );
+
+
+  text(
+    formatMoveValue(
+      values.y
+    ),
+    width - 15,
+    moveYY
+  );
+
+
+  // HELP TEXT
+
+  textAlign(
+    LEFT,
+    CENTER
+  );
+
+  fill(120);
+
+  textSize(9);
+
+
+  text(
+    "Adjust the amount of black",
+    155,
+    bwY + 20
+  );
+
+
+  text(
+    "Enlarge the image",
+    155,
+    zoomY + 20
+  );
+
+
+  text(
+    "← Left / Right →",
+    155,
+    moveXY + 20
+  );
+
+
+  text(
+    "↑ Up / Down ↓",
+    155,
+    moveYY + 20
+  );
+}
+
+
+// ======================================================
+// GET VALUES
+// ======================================================
+
+function getPhotoValues(
+  photoNumber
+) {
+
+  if (photoNumber === 1) {
+
+    return {
+
+      threshold: threshold1,
+      zoom: zoom1,
+      x: offsetX1,
+      y: offsetY1
+
+    };
+
+  } else {
+
+    return {
+
+      threshold: threshold2,
+      zoom: zoom2,
+      x: offsetX2,
+      y: offsetY2
+
+    };
+  }
+}
+
+
+// ======================================================
+// FORMAT MOVEMENT VALUE
+// ======================================================
+
+function formatMoveValue(value) {
+
+  if (value > 0) {
+
+    return "+" + value;
+  }
+
+
+  return String(value);
+}
+
+
+// ======================================================
+// EMAIL INSTRUCTIONS
+// ======================================================
+
+function drawEmailInstructions(
+  fontSize
+) {
+
+  fill(80);
+
+  textSize(fontSize);
+
+  textAlign(
+    CENTER,
+    CENTER
+  );
+
 
   textStyle(NORMAL);
 
@@ -1422,99 +1845,6 @@ function drawMobile() {
 
 
   textStyle(NORMAL);
-}
-
-
-// ======================================================
-// MOBILE CONTROL LABELS
-// ======================================================
-
-function drawMobileControlLabels(
-  photoNumber,
-  bwY,
-  zoomY
-) {
-
-  let thresholdValue =
-    photoNumber === 1
-      ? threshold1
-      : threshold2;
-
-
-  let zoomValue =
-    photoNumber === 1
-      ? zoom1
-      : zoom2;
-
-
-  textAlign(
-    LEFT,
-    CENTER
-  );
-
-
-  fill(50);
-
-  textSize(12);
-
-
-  text(
-    "Black & White",
-    20,
-    bwY
-  );
-
-
-  text(
-    "Zoom",
-    20,
-    zoomY
-  );
-
-
-  textAlign(
-    RIGHT,
-    CENTER
-  );
-
-
-  text(
-    thresholdValue,
-    width - 15,
-    bwY
-  );
-
-
-  text(
-    zoomValue.toFixed(2) + "×",
-    width - 15,
-    zoomY
-  );
-
-
-  textAlign(
-    LEFT,
-    CENTER
-  );
-
-
-  fill(120);
-
-  textSize(9);
-
-
-  text(
-    "Adjust the amount of black",
-    165,
-    bwY + 20
-  );
-
-
-  text(
-    "Enlarge the image",
-    165,
-    zoomY + 20
-  );
 }
 
 
@@ -1600,7 +1930,7 @@ function shortFileName(name) {
 
 
 // ======================================================
-// FILE 1
+// PHOTO 1 FILE
 // ======================================================
 
 function handleFile1(file) {
@@ -1637,6 +1967,14 @@ function handleFile1(file) {
         100
       );
 
+      moveXSlider1.value(
+        0
+      );
+
+      moveYSlider1.value(
+        0
+      );
+
 
       updatePhoto1();
     }
@@ -1645,7 +1983,7 @@ function handleFile1(file) {
 
 
 // ======================================================
-// FILE 2
+// PHOTO 2 FILE
 // ======================================================
 
 function handleFile2(file) {
@@ -1682,6 +2020,14 @@ function handleFile2(file) {
         100
       );
 
+      moveXSlider2.value(
+        0
+      );
+
+      moveYSlider2.value(
+        0
+      );
+
 
       updatePhoto2();
     }
@@ -1693,11 +2039,13 @@ function handleFile2(file) {
 // SCHEDULE UPDATE
 // ======================================================
 
-function schedulePhotoUpdate(photoNumber) {
+function schedulePhotoUpdate(
+  photoNumber
+) {
 
   let delay =
     isMobile
-      ? 140
+      ? 130
       : 40;
 
 
@@ -1852,7 +2200,7 @@ function makeA4Image(
 
 
   // ====================================================
-  // CENTER + USER OFFSET
+  // CENTER + SLIDER OFFSET
   // ====================================================
 
   let x =
@@ -1875,7 +2223,9 @@ function makeA4Image(
     offsetY;
 
 
-  // Prevent empty gaps
+  // ====================================================
+  // PREVENT EMPTY WHITE AREAS
+  // ====================================================
 
   x =
     constrain(
@@ -1967,6 +2317,10 @@ function makeCombinedImage() {
   resultGraphics.background(255);
 
 
+  // ====================================================
+  // A1 B1 A2 B2 ...
+  // ====================================================
+
   for (
     let i = 0;
     i < numSlices;
@@ -2037,7 +2391,7 @@ function makeCombinedImage() {
 
 
 // ======================================================
-// TOP / BOTTOM MARKS
+// TOP / BOTTOM SCORING MARKS
 // ======================================================
 
 function drawCutMarks(g) {
@@ -2070,6 +2424,8 @@ function drawCutMarks(g) {
       panelW;
 
 
+    // TOP
+
     g.line(
       x,
       0,
@@ -2077,6 +2433,8 @@ function drawCutMarks(g) {
       markLength
     );
 
+
+    // BOTTOM
 
     g.line(
       x,
@@ -2089,343 +2447,6 @@ function drawCutMarks(g) {
 
 
   g.pop();
-}
-
-
-// ======================================================
-// DRAG HELPERS
-// ======================================================
-
-function beginDragAt(
-  pointerX,
-  pointerY
-) {
-
-  if (
-    img1 !== null &&
-    pointInsidePreview(
-      pointerX,
-      pointerY,
-      preview1
-    )
-  ) {
-
-    draggingPhoto = 1;
-
-    lastPointerX =
-      pointerX;
-
-    lastPointerY =
-      pointerY;
-
-    return true;
-  }
-
-
-  if (
-    img2 !== null &&
-    pointInsidePreview(
-      pointerX,
-      pointerY,
-      preview2
-    )
-  ) {
-
-    draggingPhoto = 2;
-
-    lastPointerX =
-      pointerX;
-
-    lastPointerY =
-      pointerY;
-
-    return true;
-  }
-
-
-  return false;
-}
-
-
-// ======================================================
-// DRAG MOVE
-// ======================================================
-
-function dragTo(
-  pointerX,
-  pointerY
-) {
-
-  if (
-    draggingPhoto === 0
-  ) {
-
-    return false;
-  }
-
-
-  let dx =
-    pointerX -
-    lastPointerX;
-
-
-  let dy =
-    pointerY -
-    lastPointerY;
-
-
-  let activePreview =
-    draggingPhoto === 1
-      ? preview1
-      : preview2;
-
-
-  let scaleX =
-    workW /
-    activePreview.w;
-
-
-  let scaleY =
-    workH /
-    activePreview.h;
-
-
-  if (
-    draggingPhoto === 1
-  ) {
-
-    offsetX1 +=
-      dx *
-      scaleX;
-
-
-    offsetY1 +=
-      dy *
-      scaleY;
-
-
-    schedulePhotoUpdate(1);
-
-  } else {
-
-    offsetX2 +=
-      dx *
-      scaleX;
-
-
-    offsetY2 +=
-      dy *
-      scaleY;
-
-
-    schedulePhotoUpdate(2);
-  }
-
-
-  lastPointerX =
-    pointerX;
-
-
-  lastPointerY =
-    pointerY;
-
-
-  return true;
-}
-
-
-// ======================================================
-// END DRAG
-// ======================================================
-
-function endDrag() {
-
-  let finishedPhoto =
-    draggingPhoto;
-
-
-  draggingPhoto = 0;
-
-
-  if (
-    finishedPhoto === 1
-  ) {
-
-    clearTimeout(
-      updateTimer1
-    );
-
-    updatePhoto1();
-
-  } else if (
-    finishedPhoto === 2
-  ) {
-
-    clearTimeout(
-      updateTimer2
-    );
-
-    updatePhoto2();
-  }
-}
-
-
-// ======================================================
-// POINT TEST
-// ======================================================
-
-function pointInsidePreview(
-  px,
-  py,
-  preview
-) {
-
-  return (
-
-    px >= preview.x &&
-
-    px <=
-      preview.x +
-      preview.w &&
-
-    py >= preview.y &&
-
-    py <=
-      preview.y +
-      preview.h
-
-  );
-}
-
-
-// ======================================================
-// DESKTOP MOUSE
-// ======================================================
-
-function mousePressed() {
-
-  beginDragAt(
-    mouseX,
-    mouseY
-  );
-}
-
-
-function mouseDragged() {
-
-  if (
-    dragTo(
-      mouseX,
-      mouseY
-    )
-  ) {
-
-    return false;
-  }
-}
-
-
-function mouseReleased() {
-
-  endDrag();
-}
-
-
-// ======================================================
-// MOBILE TOUCH
-//
-// IMPORTANT:
-// Page scrolling is allowed unless
-// the user is actively dragging an image.
-// ======================================================
-
-function touchStarted() {
-
-  if (
-    touches.length === 0
-  ) {
-
-    return;
-  }
-
-
-  let tx =
-    touches[0].x;
-
-
-  let ty =
-    touches[0].y;
-
-
-  let started =
-    beginDragAt(
-      tx,
-      ty
-    );
-
-
-  // Only stop browser behavior
-  // when touching an editable image
-
-  if (started) {
-
-    return false;
-  }
-}
-
-
-// ======================================================
-// TOUCH MOVE
-// ======================================================
-
-function touchMoved() {
-
-  // Not dragging an image:
-  // allow normal browser scrolling.
-
-  if (
-    draggingPhoto === 0
-  ) {
-
-    return;
-  }
-
-
-  if (
-    touches.length === 0
-  ) {
-
-    return;
-  }
-
-
-  dragTo(
-    touches[0].x,
-    touches[0].y
-  );
-
-
-  // Prevent scrolling only while
-  // actively moving an image.
-
-  return false;
-}
-
-
-// ======================================================
-// TOUCH END
-// ======================================================
-
-function touchEnded() {
-
-  if (
-    draggingPhoto !== 0
-  ) {
-
-    endDrag();
-
-    return false;
-  }
 }
 
 
@@ -2620,10 +2641,8 @@ function saveFinalImage() {
 // ======================================================
 // WINDOW RESIZE
 //
-// On smartphones the browser address bar
-// can trigger resize events while scrolling.
-// Therefore layout is rebuilt only if
-// the width changes meaningfully.
+// Ignore small width changes caused by
+// mobile browser address bars.
 // ======================================================
 
 function windowResized() {
@@ -2639,11 +2658,6 @@ function windowResized() {
     windowWidth <=
     mobileBreakpoint;
 
-
-  // Re-layout only when:
-  // 1. device mode changes, or
-  // 2. width changes significantly
-  //    (rotation / real window resize)
 
   if (
     newMobileState !== isMobile ||
