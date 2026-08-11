@@ -39,6 +39,14 @@ main {
 }
 
 
+/* ======================================================
+   P5 CANVAS
+
+   IMPORTANT:
+   The canvas is only for displaying images.
+   It no longer receives touch or mouse events.
+   ====================================================== */
+
 canvas {
   display: block;
 
@@ -47,7 +55,8 @@ canvas {
 
   max-width: 100%;
 
-  touch-action: auto;
+  /* 핵심 */
+  pointer-events: none;
 }
 
 
@@ -56,15 +65,17 @@ canvas {
    ====================================================== */
 
 button {
-
   font-family:
     Arial,
     Helvetica,
     sans-serif;
 
+  cursor: pointer;
+
+  pointer-events: auto;
+
   -webkit-tap-highlight-color:
     transparent;
-
 }
 
 
@@ -73,9 +84,9 @@ button {
    ====================================================== */
 
 input[type="range"] {
-
   cursor: pointer;
 
+  pointer-events: auto;
 }
 
 
@@ -87,40 +98,32 @@ input[type="range"] {
 
   html,
   body {
-
     width: 100%;
 
     overflow-x: hidden;
     overflow-y: auto;
-
   }
 
 
   body {
-
-    -webkit-overflow-scrolling:
-      touch;
-
+    -webkit-overflow-scrolling: touch;
   }
 
 
   canvas {
-
     display: block;
 
     margin: 0;
 
     max-width: 100%;
 
-    touch-action: auto;
-
+    /* 모바일에서도 canvas가 터치를 받지 않음 */
+    pointer-events: none;
   }
 
 
   button {
-
     font-size: 14px;
-
   }
 
 }
