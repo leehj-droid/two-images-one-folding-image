@@ -1,18 +1,6 @@
 // ======================================================
 // TWO IMAGES / ONE FOLDING IMAGE
-//
-// RESPONSIVE VERSION
-//
-// Desktop:
-// PHOTO 1 + PHOTO 2 side by side
-//
-// Mobile:
-// PHOTO 1
-// PHOTO 2
-// FINAL IMAGE
-//
-// Final downloaded image remains:
-// 2480 × 1754 px
+// RESPONSIVE DESKTOP + MOBILE VERSION
 // ======================================================
 
 
@@ -52,13 +40,16 @@ let offsetY2 = 0;
 
 let isMobile = false;
 
+let lastLayoutWidth = 0;
+
+const mobileBreakpoint = 700;
+
 const desktopW = 1000;
 const desktopH = 1420;
 
 
 // ======================================================
 // PREVIEW AREAS
-// Dynamic values
 // ======================================================
 
 let preview1 = {
@@ -77,7 +68,7 @@ let preview2 = {
 
 
 // ======================================================
-// LAYOUT VALUES
+// LAYOUT
 // ======================================================
 
 let layout = {};
@@ -124,21 +115,26 @@ let saveButton;
 
 
 // ======================================================
-// WORKING SIZE
+// FINAL IMAGE SIZE
 //
+// Each source image:
 // A4 portrait ratio
+// 1240 × 1754 px
+//
+// Final:
+// 2480 × 1754 px
 // ======================================================
 
 const workW = 1240;
 const workH = 1754;
 
 
-// Fixed number of slices
+// 8 slices per source image
 const numSlices = 8;
 
 
 // ======================================================
-// TOP / BOTTOM SCORING MARKS
+// TOP / BOTTOM MARKS
 //
 // approx. 1 cm
 // ======================================================
@@ -153,7 +149,11 @@ const markLength = 59;
 function setup() {
 
   isMobile =
-    windowWidth <= 700;
+    windowWidth <= mobileBreakpoint;
+
+
+  lastLayoutWidth =
+    windowWidth;
 
 
   let initialW;
@@ -172,7 +172,7 @@ function setup() {
 
   createCanvas(
     initialW,
-    isMobile ? 2200 : desktopH
+    isMobile ? 2300 : desktopH
   );
 
 
@@ -180,7 +180,7 @@ function setup() {
 
 
   // ====================================================
-  // HIDDEN FILE INPUT 1
+  // FILE INPUT 1
   // ====================================================
 
   fileInput1 =
@@ -262,7 +262,7 @@ function setup() {
 
 
   // ====================================================
-  // HIDDEN FILE INPUT 2
+  // FILE INPUT 2
   // ====================================================
 
   fileInput2 =
@@ -389,10 +389,6 @@ function setup() {
   );
 
 
-  // ====================================================
-  // RESPONSIVE LAYOUT
-  // ====================================================
-
   applyResponsiveLayout();
 
 
@@ -440,7 +436,7 @@ function styleChooseButton(button) {
 function applyResponsiveLayout() {
 
   isMobile =
-    windowWidth <= 700;
+    windowWidth <= mobileBreakpoint;
 
 
   if (isMobile) {
@@ -451,6 +447,10 @@ function applyResponsiveLayout() {
 
     setDesktopLayout();
   }
+
+
+  lastLayoutWidth =
+    windowWidth;
 
 
   redraw();
@@ -468,8 +468,6 @@ function setDesktopLayout() {
     desktopH
   );
 
-
-  // PREVIEWS
 
   preview1 = {
     x: 70,
@@ -524,8 +522,6 @@ function setDesktopLayout() {
   };
 
 
-  // PHOTO 1 CONTROLS
-
   chooseButton1.position(
     70,
     115
@@ -552,8 +548,6 @@ function setDesktopLayout() {
   );
 
 
-  // PHOTO 2 CONTROLS
-
   chooseButton2.position(
     580,
     115
@@ -579,8 +573,6 @@ function setDesktopLayout() {
     170
   );
 
-
-  // DOWNLOAD
 
   saveButton.position(
     width / 2,
@@ -617,15 +609,15 @@ function setMobileLayout() {
   // PHOTO 1
   // ====================================================
 
-  let photo1TitleY = 110;
+  let photo1TitleY = 115;
 
-  let choose1Y = 135;
+  let choose1Y = 145;
 
-  let bw1Y = 205;
+  let bw1Y = 225;
 
-  let zoom1Y = 265;
+  let zoom1Y = 295;
 
-  let preview1Y = 325;
+  let preview1Y = 365;
 
 
   preview1 = {
@@ -650,27 +642,27 @@ function setMobileLayout() {
 
   let photo2TitleY =
     drag1Y +
-    70;
+    85;
 
 
   let choose2Y =
     photo2TitleY +
-    25;
+    30;
 
 
   let bw2Y =
     photo2TitleY +
-    95;
+    110;
 
 
   let zoom2Y =
     photo2TitleY +
-    155;
+    180;
 
 
   let preview2Y =
     photo2TitleY +
-    215;
+    250;
 
 
   preview2 = {
@@ -690,22 +682,22 @@ function setMobileLayout() {
 
 
   // ====================================================
-  // FINAL IMAGE
+  // FINAL
   // ====================================================
 
   let instructionY =
     drag2Y +
-    45;
+    55;
 
 
   let finalTitleY =
     instructionY +
-    55;
+    60;
 
 
   let finalY =
     finalTitleY +
-    35;
+    40;
 
 
   let finalW =
@@ -721,22 +713,22 @@ function setMobileLayout() {
   let downloadY =
     finalY +
     finalH +
-    40;
+    45;
 
 
   let email1Y =
     downloadY +
-    60;
+    65;
 
 
   let email2Y =
     email1Y +
-    23;
+    24;
 
 
   let mobileCanvasH =
     email2Y +
-    55;
+    70;
 
 
   resizeCanvas(
@@ -745,14 +737,10 @@ function setMobileLayout() {
   );
 
 
-  // ====================================================
-  // STORE LAYOUT
-  // ====================================================
-
   layout = {
 
-    titleY: 35,
-    subtitleY: 65,
+    titleY: 40,
+    subtitleY: 75,
 
     photo1TitleY: photo1TitleY,
     photo2TitleY: photo2TitleY,
@@ -782,12 +770,11 @@ function setMobileLayout() {
 
     email1Y: email1Y,
     email2Y: email2Y
-
   };
 
 
   // ====================================================
-  // MOBILE PHOTO 1 CONTROLS
+  // PHOTO 1 DOM CONTROLS
   // ====================================================
 
   chooseButton1.position(
@@ -797,33 +784,33 @@ function setMobileLayout() {
 
 
   thresholdSlider1.position(
-    155,
+    165,
     bw1Y - 10
   );
 
   thresholdSlider1.size(
     max(
       120,
-      mobileW - 205
+      mobileW - 220
     )
   );
 
 
   zoomSlider1.position(
-    155,
+    165,
     zoom1Y - 10
   );
 
   zoomSlider1.size(
     max(
       120,
-      mobileW - 205
+      mobileW - 220
     )
   );
 
 
   // ====================================================
-  // MOBILE PHOTO 2 CONTROLS
+  // PHOTO 2 DOM CONTROLS
   // ====================================================
 
   chooseButton2.position(
@@ -833,27 +820,27 @@ function setMobileLayout() {
 
 
   thresholdSlider2.position(
-    155,
+    165,
     bw2Y - 10
   );
 
   thresholdSlider2.size(
     max(
       120,
-      mobileW - 205
+      mobileW - 220
     )
   );
 
 
   zoomSlider2.position(
-    155,
+    165,
     zoom2Y - 10
   );
 
   zoomSlider2.size(
     max(
       120,
-      mobileW - 205
+      mobileW - 220
     )
   );
 
@@ -890,14 +877,10 @@ function draw() {
 
 
 // ======================================================
-// DESKTOP DRAW
+// DESKTOP
 // ======================================================
 
 function drawDesktop() {
-
-  // ====================================================
-  // TITLE
-  // ====================================================
 
   fill(30);
 
@@ -910,6 +893,7 @@ function drawDesktop() {
 
   textSize(26);
 
+
   text(
     "TWO IMAGES / ONE FOLDING IMAGE",
     width / 2,
@@ -920,6 +904,7 @@ function drawDesktop() {
   fill(90);
 
   textSize(14);
+
 
   text(
     "Combine two images into one folding artwork.",
@@ -936,11 +921,13 @@ function drawDesktop() {
 
   textSize(18);
 
+
   text(
     "PHOTO 1",
     245,
     layout.photo1TitleY
   );
+
 
   text(
     "PHOTO 2",
@@ -962,11 +949,13 @@ function drawDesktop() {
 
   textSize(11);
 
+
   text(
     shortFileName(fileName1),
     layout.fileName1X,
     layout.fileNameY
   );
+
 
   text(
     shortFileName(fileName2),
@@ -983,11 +972,13 @@ function drawDesktop() {
 
   textSize(13);
 
+
   text(
     "Black & White",
     70,
     layout.bw1Y
   );
+
 
   text(
     "Zoom",
@@ -1002,6 +993,7 @@ function drawDesktop() {
     layout.bw1Y
   );
 
+
   text(
     zoom1.toFixed(2) + "×",
     350,
@@ -1013,11 +1005,13 @@ function drawDesktop() {
 
   textSize(11);
 
+
   text(
     "Adjust the amount of black",
     350,
     layout.bw1Y + 15
   );
+
 
   text(
     "Enlarge the image",
@@ -1034,11 +1028,13 @@ function drawDesktop() {
 
   textSize(13);
 
+
   text(
     "Black & White",
     580,
     layout.bw2Y
   );
+
 
   text(
     "Zoom",
@@ -1053,6 +1049,7 @@ function drawDesktop() {
     layout.bw2Y
   );
 
+
   text(
     zoom2.toFixed(2) + "×",
     860,
@@ -1064,11 +1061,13 @@ function drawDesktop() {
 
   textSize(11);
 
+
   text(
     "Adjust the amount of black",
     860,
     layout.bw2Y + 15
   );
+
 
   text(
     "Enlarge the image",
@@ -1095,10 +1094,6 @@ function drawDesktop() {
   );
 
 
-  // ====================================================
-  // DRAG TEXT
-  // ====================================================
-
   textAlign(
     CENTER,
     CENTER
@@ -1123,13 +1118,10 @@ function drawDesktop() {
   );
 
 
-  // ====================================================
-  // SHORT INSTRUCTION
-  // ====================================================
-
   fill(100);
 
   textSize(13);
+
 
   text(
     "Adjust both images until you are happy with your final artwork.",
@@ -1139,12 +1131,13 @@ function drawDesktop() {
 
 
   // ====================================================
-  // FINAL IMAGE
+  // FINAL
   // ====================================================
 
   fill(0);
 
   textSize(22);
+
 
   text(
     "FINAL IMAGE",
@@ -1189,7 +1182,7 @@ function drawDesktop() {
 
 
 // ======================================================
-// MOBILE DRAW
+// MOBILE
 // ======================================================
 
 function drawMobile() {
@@ -1210,7 +1203,7 @@ function drawMobile() {
 
   if (width < 390) {
 
-    textSize(18);
+    textSize(17);
 
   } else {
 
@@ -1229,6 +1222,7 @@ function drawMobile() {
 
   textSize(12);
 
+
   text(
     "Combine two images into one folding artwork.",
     width / 2,
@@ -1237,12 +1231,13 @@ function drawMobile() {
 
 
   // ====================================================
-  // PHOTO 1 TITLE
+  // PHOTO 1
   // ====================================================
 
   fill(0);
 
   textSize(18);
+
 
   text(
     "PHOTO 1",
@@ -1250,10 +1245,6 @@ function drawMobile() {
     layout.photo1TitleY
   );
 
-
-  // ====================================================
-  // PHOTO 1 FILE NAME
-  // ====================================================
 
   textAlign(
     LEFT,
@@ -1264,16 +1255,13 @@ function drawMobile() {
 
   textSize(10);
 
+
   text(
     shortFileName(fileName1),
-    160,
+    170,
     layout.choose1Y + 15
   );
 
-
-  // ====================================================
-  // PHOTO 1 CONTROLS
-  // ====================================================
 
   drawMobileControlLabels(
     1,
@@ -1281,10 +1269,6 @@ function drawMobile() {
     layout.zoom1Y
   );
 
-
-  // ====================================================
-  // PHOTO 1 PREVIEW
-  // ====================================================
 
   drawPhotoPreview(
     processed1,
@@ -1302,6 +1286,7 @@ function drawMobile() {
 
   textSize(11);
 
+
   text(
     "Drag the image to adjust its position.",
     width / 2,
@@ -1310,12 +1295,13 @@ function drawMobile() {
 
 
   // ====================================================
-  // PHOTO 2 TITLE
+  // PHOTO 2
   // ====================================================
 
   fill(0);
 
   textSize(18);
+
 
   text(
     "PHOTO 2",
@@ -1323,10 +1309,6 @@ function drawMobile() {
     layout.photo2TitleY
   );
 
-
-  // ====================================================
-  // PHOTO 2 FILE NAME
-  // ====================================================
 
   textAlign(
     LEFT,
@@ -1337,16 +1319,13 @@ function drawMobile() {
 
   textSize(10);
 
+
   text(
     shortFileName(fileName2),
-    160,
+    170,
     layout.choose2Y + 15
   );
 
-
-  // ====================================================
-  // PHOTO 2 CONTROLS
-  // ====================================================
 
   drawMobileControlLabels(
     2,
@@ -1354,10 +1333,6 @@ function drawMobile() {
     layout.zoom2Y
   );
 
-
-  // ====================================================
-  // PHOTO 2 PREVIEW
-  // ====================================================
 
   drawPhotoPreview(
     processed2,
@@ -1375,6 +1350,7 @@ function drawMobile() {
 
   textSize(11);
 
+
   text(
     "Drag the image to adjust its position.",
     width / 2,
@@ -1383,12 +1359,13 @@ function drawMobile() {
 
 
   // ====================================================
-  // SHORT INSTRUCTION
+  // INSTRUCTION
   // ====================================================
 
   fill(100);
 
   textSize(11);
+
 
   text(
     "Adjust both images until you are happy with your final artwork.",
@@ -1398,12 +1375,13 @@ function drawMobile() {
 
 
   // ====================================================
-  // FINAL IMAGE
+  // FINAL
   // ====================================================
 
   fill(0);
 
   textSize(20);
+
 
   text(
     "FINAL IMAGE",
@@ -1527,15 +1505,15 @@ function drawMobileControlLabels(
 
   text(
     "Adjust the amount of black",
-    155,
-    bwY + 19
+    165,
+    bwY + 20
   );
 
 
   text(
     "Enlarge the image",
-    155,
-    zoomY + 19
+    165,
+    zoomY + 20
   );
 }
 
@@ -1713,16 +1691,13 @@ function handleFile2(file) {
 
 // ======================================================
 // SCHEDULE UPDATE
-// Helps mobile performance
 // ======================================================
 
-function schedulePhotoUpdate(
-  photoNumber
-) {
+function schedulePhotoUpdate(photoNumber) {
 
   let delay =
     isMobile
-      ? 120
+      ? 140
       : 40;
 
 
@@ -1877,7 +1852,7 @@ function makeA4Image(
 
 
   // ====================================================
-  // CENTER + USER DRAG
+  // CENTER + USER OFFSET
   // ====================================================
 
   let x =
@@ -1900,9 +1875,7 @@ function makeA4Image(
     offsetY;
 
 
-  // ====================================================
-  // PREVENT EMPTY WHITE GAPS
-  // ====================================================
+  // Prevent empty gaps
 
   x =
     constrain(
@@ -1930,7 +1903,7 @@ function makeA4Image(
 
 
   // ====================================================
-  // BLACK & WHITE
+  // BINARY BLACK & WHITE
   // ====================================================
 
   temp.filter(
@@ -1993,10 +1966,6 @@ function makeCombinedImage() {
 
   resultGraphics.background(255);
 
-
-  // ====================================================
-  // A1 B1 A2 B2 ...
-  // ====================================================
 
   for (
     let i = 0;
@@ -2068,7 +2037,7 @@ function makeCombinedImage() {
 
 
 // ======================================================
-// TOP / BOTTOM SCORING MARKS
+// TOP / BOTTOM MARKS
 // ======================================================
 
 function drawCutMarks(g) {
@@ -2101,8 +2070,6 @@ function drawCutMarks(g) {
       panelW;
 
 
-    // TOP
-
     g.line(
       x,
       0,
@@ -2110,8 +2077,6 @@ function drawCutMarks(g) {
       markLength
     );
 
-
-    // BOTTOM
 
     g.line(
       x,
@@ -2128,7 +2093,7 @@ function drawCutMarks(g) {
 
 
 // ======================================================
-// DRAG START
+// DRAG HELPERS
 // ======================================================
 
 function beginDragAt(
@@ -2270,7 +2235,7 @@ function dragTo(
 
 
 // ======================================================
-// DRAG END
+// END DRAG
 // ======================================================
 
 function endDrag() {
@@ -2282,9 +2247,9 @@ function endDrag() {
   draggingPhoto = 0;
 
 
-  // Ensure final high-resolution update
-
-  if (finishedPhoto === 1) {
+  if (
+    finishedPhoto === 1
+  ) {
 
     clearTimeout(
       updateTimer1
@@ -2306,7 +2271,7 @@ function endDrag() {
 
 
 // ======================================================
-// POINT INSIDE PREVIEW
+// POINT TEST
 // ======================================================
 
 function pointInsidePreview(
@@ -2368,46 +2333,88 @@ function mouseReleased() {
 
 // ======================================================
 // MOBILE TOUCH
+//
+// IMPORTANT:
+// Page scrolling is allowed unless
+// the user is actively dragging an image.
 // ======================================================
 
 function touchStarted() {
 
   if (
-    touches.length > 0
+    touches.length === 0
   ) {
 
-    let started =
-      beginDragAt(
-        touches[0].x,
-        touches[0].y
-      );
-
-
-    if (started) {
-
-      return false;
-    }
+    return;
   }
-}
 
 
-function touchMoved() {
+  let tx =
+    touches[0].x;
 
-  if (
-    draggingPhoto !== 0 &&
-    touches.length > 0
-  ) {
 
-    dragTo(
-      touches[0].x,
-      touches[0].y
+  let ty =
+    touches[0].y;
+
+
+  let started =
+    beginDragAt(
+      tx,
+      ty
     );
 
+
+  // Only stop browser behavior
+  // when touching an editable image
+
+  if (started) {
 
     return false;
   }
 }
 
+
+// ======================================================
+// TOUCH MOVE
+// ======================================================
+
+function touchMoved() {
+
+  // Not dragging an image:
+  // allow normal browser scrolling.
+
+  if (
+    draggingPhoto === 0
+  ) {
+
+    return;
+  }
+
+
+  if (
+    touches.length === 0
+  ) {
+
+    return;
+  }
+
+
+  dragTo(
+    touches[0].x,
+    touches[0].y
+  );
+
+
+  // Prevent scrolling only while
+  // actively moving an image.
+
+  return false;
+}
+
+
+// ======================================================
+// TOUCH END
+// ======================================================
 
 function touchEnded() {
 
@@ -2586,7 +2593,7 @@ function drawPlaceholder(
 
 
 // ======================================================
-// DOWNLOAD FINAL IMAGE
+// DOWNLOAD
 // ======================================================
 
 function saveFinalImage() {
@@ -2611,10 +2618,38 @@ function saveFinalImage() {
 
 
 // ======================================================
-// WINDOW RESIZE / ORIENTATION CHANGE
+// WINDOW RESIZE
+//
+// On smartphones the browser address bar
+// can trigger resize events while scrolling.
+// Therefore layout is rebuilt only if
+// the width changes meaningfully.
 // ======================================================
 
 function windowResized() {
 
-  applyResponsiveLayout();
+  let widthDifference =
+    abs(
+      windowWidth -
+      lastLayoutWidth
+    );
+
+
+  let newMobileState =
+    windowWidth <=
+    mobileBreakpoint;
+
+
+  // Re-layout only when:
+  // 1. device mode changes, or
+  // 2. width changes significantly
+  //    (rotation / real window resize)
+
+  if (
+    newMobileState !== isMobile ||
+    widthDifference > 40
+  ) {
+
+    applyResponsiveLayout();
+  }
 }
