@@ -9,8 +9,8 @@
 // Move X
 // Move Y
 //
-// No mouse/touch image dragging.
-// This allows normal mobile page scrolling.
+// No image dragging.
+// Mobile scrolling remains natural.
 // ======================================================
 
 
@@ -621,6 +621,8 @@ function setDesktopLayout() {
     finalW: 900,
     finalH: 320,
 
+    browserNoticeY: 1320,
+
     downloadY: 1345,
 
     email1Y: 1395,
@@ -628,9 +630,7 @@ function setDesktopLayout() {
   };
 
 
-  // ====================================================
-  // PHOTO 1 CONTROLS
-  // ====================================================
+  // PHOTO 1
 
   chooseButton1.position(
     70,
@@ -666,9 +666,7 @@ function setDesktopLayout() {
   );
 
 
-  // ====================================================
-  // PHOTO 2 CONTROLS
-  // ====================================================
+  // PHOTO 2
 
   chooseButton2.position(
     580,
@@ -703,10 +701,6 @@ function setDesktopLayout() {
     layout.moveY2Y
   );
 
-
-  // ====================================================
-  // DOWNLOAD
-  // ====================================================
 
   saveButton.position(
     width / 2,
@@ -760,9 +754,7 @@ function setMobileLayout() {
     workW;
 
 
-  // ====================================================
   // PHOTO 1
-  // ====================================================
 
   let photo1TitleY = 115;
 
@@ -794,9 +786,7 @@ function setMobileLayout() {
     preview1.h;
 
 
-  // ====================================================
   // PHOTO 2
-  // ====================================================
 
   let photo2TitleY =
     photo1End +
@@ -848,9 +838,7 @@ function setMobileLayout() {
     preview2.h;
 
 
-  // ====================================================
   // FINAL
-  // ====================================================
 
   let instructionY =
     photo2End +
@@ -877,10 +865,20 @@ function setMobileLayout() {
     (workW * 2);
 
 
-  let downloadY =
+  let browserNotice1Y =
     finalY +
     finalH +
-    45;
+    30;
+
+
+  let browserNotice2Y =
+    browserNotice1Y +
+    15;
+
+
+  let downloadY =
+    browserNotice2Y +
+    30;
 
 
   let email1Y =
@@ -934,6 +932,9 @@ function setMobileLayout() {
     finalW: finalW,
     finalH: finalH,
 
+    browserNotice1Y: browserNotice1Y,
+    browserNotice2Y: browserNotice2Y,
+
     downloadY: downloadY,
 
     email1Y: email1Y,
@@ -941,11 +942,8 @@ function setMobileLayout() {
   };
 
 
-  // ====================================================
-  // MOBILE SLIDER DIMENSIONS
-  // ====================================================
-
   let sliderX = 155;
+
 
   let sliderW =
     max(
@@ -1034,8 +1032,6 @@ function setMobileLayout() {
   );
 
 
-  // DOWNLOAD
-
   saveButton.position(
     mobileW / 2,
     downloadY
@@ -1091,9 +1087,7 @@ function draw() {
 
 function drawDesktop() {
 
-  // ====================================================
   // TITLE
-  // ====================================================
 
   fill(30);
 
@@ -1126,9 +1120,7 @@ function drawDesktop() {
   );
 
 
-  // ====================================================
   // PHOTO TITLES
-  // ====================================================
 
   fill(0);
 
@@ -1149,9 +1141,7 @@ function drawDesktop() {
   );
 
 
-  // ====================================================
   // FILE NAMES
-  // ====================================================
 
   textAlign(
     LEFT,
@@ -1177,9 +1167,7 @@ function drawDesktop() {
   );
 
 
-  // ====================================================
   // PHOTO 1 CONTROLS
-  // ====================================================
 
   drawDesktopControls(
     1,
@@ -1192,9 +1180,7 @@ function drawDesktop() {
   );
 
 
-  // ====================================================
   // PHOTO 2 CONTROLS
-  // ====================================================
 
   drawDesktopControls(
     2,
@@ -1207,9 +1193,7 @@ function drawDesktop() {
   );
 
 
-  // ====================================================
-  // PHOTO PREVIEWS
-  // ====================================================
+  // PREVIEWS
 
   drawPhotoPreview(
     processed1,
@@ -1225,9 +1209,7 @@ function drawDesktop() {
   );
 
 
-  // ====================================================
   // INSTRUCTION
-  // ====================================================
 
   textAlign(
     CENTER,
@@ -1246,9 +1228,7 @@ function drawDesktop() {
   );
 
 
-  // ====================================================
   // FINAL IMAGE
-  // ====================================================
 
   fill(0);
 
@@ -1265,9 +1245,28 @@ function drawDesktop() {
   drawFinalPreview();
 
 
-  // ====================================================
+  // BROWSER NOTICE
+
+  fill(125);
+
+  textSize(11);
+
+  textStyle(NORMAL);
+
+  textAlign(
+    CENTER,
+    CENTER
+  );
+
+
+  text(
+    "For best results, please open this page in Chrome or Safari before downloading.",
+    width / 2,
+    layout.browserNoticeY
+  );
+
+
   // EMAIL
-  // ====================================================
 
   drawEmailInstructions(
     15
@@ -1410,9 +1409,7 @@ function drawDesktopControls(
 
 function drawMobile() {
 
-  // ====================================================
   // TITLE
-  // ====================================================
 
   fill(30);
 
@@ -1453,9 +1450,7 @@ function drawMobile() {
   );
 
 
-  // ====================================================
   // PHOTO 1
-  // ====================================================
 
   drawMobilePhotoSection(
     1,
@@ -1472,9 +1467,7 @@ function drawMobile() {
   );
 
 
-  // ====================================================
   // PHOTO 2
-  // ====================================================
 
   drawMobilePhotoSection(
     2,
@@ -1491,9 +1484,7 @@ function drawMobile() {
   );
 
 
-  // ====================================================
   // INSTRUCTION
-  // ====================================================
 
   textAlign(
     CENTER,
@@ -1512,9 +1503,7 @@ function drawMobile() {
   );
 
 
-  // ====================================================
   // FINAL IMAGE
-  // ====================================================
 
   fill(0);
 
@@ -1531,9 +1520,35 @@ function drawMobile() {
   drawFinalPreview();
 
 
-  // ====================================================
+  // BROWSER NOTICE
+
+  fill(125);
+
+  textSize(10);
+
+  textStyle(NORMAL);
+
+  textAlign(
+    CENTER,
+    CENTER
+  );
+
+
+  text(
+    "For best results, open this page in Chrome or Safari",
+    width / 2,
+    layout.browserNotice1Y
+  );
+
+
+  text(
+    "before downloading.",
+    width / 2,
+    layout.browserNotice2Y
+  );
+
+
   // EMAIL
-  // ====================================================
 
   drawEmailInstructions(
     12
@@ -1758,7 +1773,7 @@ function drawMobileControls(
 
 
 // ======================================================
-// GET VALUES
+// GET PHOTO VALUES
 // ======================================================
 
 function getPhotoValues(
@@ -1791,7 +1806,7 @@ function getPhotoValues(
 
 
 // ======================================================
-// FORMAT MOVEMENT VALUE
+// FORMAT MOVE VALUE
 // ======================================================
 
 function formatMoveValue(value) {
@@ -1845,19 +1860,6 @@ function drawEmailInstructions(
 
 
   textStyle(NORMAL);
-
-  text(
-    "Please open this page in Chrome or Safari before downloading.",
-    width / 2,
-    layout.email1Y
-  );
-
-   text(
-  "Downloads may not work properly in in-app browsers such as KakaoTalk.",
-
-    width / 2,
-    layout.email1Y
-  );
 }
 
 
@@ -2183,9 +2185,7 @@ function makeA4Image(
   temp.background(255);
 
 
-  // ====================================================
   // COVER SCALE
-  // ====================================================
 
   let baseScale =
     max(
@@ -2212,9 +2212,7 @@ function makeA4Image(
     finalScale;
 
 
-  // ====================================================
-  // CENTER + SLIDER OFFSET
-  // ====================================================
+  // CENTER + OFFSET
 
   let x =
     (
@@ -2236,9 +2234,7 @@ function makeA4Image(
     offsetY;
 
 
-  // ====================================================
   // PREVENT EMPTY WHITE AREAS
-  // ====================================================
 
   x =
     constrain(
@@ -2265,9 +2261,7 @@ function makeA4Image(
   );
 
 
-  // ====================================================
-  // BINARY BLACK & WHITE
-  // ====================================================
+  // BLACK & WHITE
 
   temp.filter(
     THRESHOLD,
@@ -2329,10 +2323,6 @@ function makeCombinedImage() {
 
   resultGraphics.background(255);
 
-
-  // ====================================================
-  // A1 B1 A2 B2 ...
-  // ====================================================
 
   for (
     let i = 0;
@@ -2630,14 +2620,11 @@ function drawPlaceholder(
 // DOWNLOAD
 // ======================================================
 
-// ======================================================
-// DOWNLOAD FINAL IMAGE
-// Desktop + Mobile
-// ======================================================
-
 function saveFinalImage() {
 
-  if (resultGraphics === null) {
+  if (
+    resultGraphics === null
+  ) {
 
     alert(
       "Please choose both images first."
@@ -2647,83 +2634,15 @@ function saveFinalImage() {
   }
 
 
-  // p5.Graphics 내부 canvas 가져오기
-  const canvas =
-    resultGraphics.canvas;
-
-
-  canvas.toBlob(
-
-    function(blob) {
-
-      if (!blob) {
-
-        alert(
-          "Unable to create the image."
-        );
-
-        return;
-      }
-
-
-      // Blob URL 생성
-      const url =
-        URL.createObjectURL(blob);
-
-
-      // 임시 다운로드 링크 생성
-      const link =
-        document.createElement("a");
-
-
-      link.href =
-        url;
-
-
-      link.download =
-        "folding_image.png";
-
-
-      // 문서에 임시 추가
-      document.body.appendChild(
-        link
-      );
-
-
-      // 다운로드 실행
-      link.click();
-
-
-      // 제거
-      document.body.removeChild(
-        link
-      );
-
-
-      // Blob URL 정리
-      setTimeout(
-        function() {
-
-          URL.revokeObjectURL(
-            url
-          );
-
-        },
-        1000
-      );
-
-    },
-
-    "image/png"
+  save(
+    resultGraphics,
+    "folding_image.png"
   );
 }
 
 
 // ======================================================
 // WINDOW RESIZE
-//
-// Ignore small width changes caused by
-// mobile browser address bars.
 // ======================================================
 
 function windowResized() {
