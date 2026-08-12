@@ -2617,13 +2617,16 @@ function drawPlaceholder(
 // DOWNLOAD
 // ======================================================
 
+// ======================================================
+// DOWNLOAD FINAL IMAGE
+// Desktop + Mobile
+// ======================================================
+
 function saveFinalImage() {
 
-  if (
-    resultGraphics === null
-  ) {
+  if (resultGraphics === null) {
 
-    console.log(
+    alert(
       "Please choose both images first."
     );
 
@@ -2631,9 +2634,74 @@ function saveFinalImage() {
   }
 
 
-  save(
-    resultGraphics,
-    "folding_image.png"
+  // p5.Graphics 내부 canvas 가져오기
+  const canvas =
+    resultGraphics.canvas;
+
+
+  canvas.toBlob(
+
+    function(blob) {
+
+      if (!blob) {
+
+        alert(
+          "Unable to create the image."
+        );
+
+        return;
+      }
+
+
+      // Blob URL 생성
+      const url =
+        URL.createObjectURL(blob);
+
+
+      // 임시 다운로드 링크 생성
+      const link =
+        document.createElement("a");
+
+
+      link.href =
+        url;
+
+
+      link.download =
+        "folding_image.png";
+
+
+      // 문서에 임시 추가
+      document.body.appendChild(
+        link
+      );
+
+
+      // 다운로드 실행
+      link.click();
+
+
+      // 제거
+      document.body.removeChild(
+        link
+      );
+
+
+      // Blob URL 정리
+      setTimeout(
+        function() {
+
+          URL.revokeObjectURL(
+            url
+          );
+
+        },
+        1000
+      );
+
+    },
+
+    "image/png"
   );
 }
 
