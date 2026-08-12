@@ -1845,6 +1845,19 @@ function drawEmailInstructions(
 
 
   textStyle(NORMAL);
+
+  text(
+    "Please open this page in Chrome or Safari before downloading.",
+    width / 2,
+    layout.email1Y
+  );
+
+   text(
+  "Downloads may not work properly in in-app browsers such as KakaoTalk.",
+
+    width / 2,
+    layout.email1Y
+  );
 }
 
 
