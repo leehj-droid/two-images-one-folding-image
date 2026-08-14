@@ -1444,7 +1444,7 @@ function drawMobile() {
 
 
   text(
-    "Combine two images into one folding artwork.",
+    "Please upload two photos that express different, contrasting sides of who you are.",
     width / 2,
     layout.subtitleY
   );
