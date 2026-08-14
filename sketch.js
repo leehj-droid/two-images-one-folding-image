@@ -1,5 +1,5 @@
 // ======================================================
-// Doble Self Portrait_TWO SELVES / ONE PORTRAIT
+// Double Self Portrait/TWO SELVES, ONE PORTRAIT
 //
 // RESPONSIVE DESKTOP + MOBILE VERSION
 //
@@ -1102,7 +1102,7 @@ function drawDesktop() {
 
 
   text(
-    "Doble Self Portrait_TWO SELVES / ONE PORTRAIT",
+    "Double Self Portrait_TWO SELVES, ONE PORTRAIT",
     width / 2,
     layout.titleY
   );
