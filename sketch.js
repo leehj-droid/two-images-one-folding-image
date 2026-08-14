@@ -1,5 +1,5 @@
 // ======================================================
-// TWO IMAGES / ONE FOLDING IMAGE
+// Doble Self Portrait_TWO SELVES / ONE PORTRAIT
 //
 // RESPONSIVE DESKTOP + MOBILE VERSION
 //
@@ -1102,7 +1102,7 @@ function drawDesktop() {
 
 
   text(
-    "TWO IMAGES / ONE FOLDING IMAGE",
+    "Doble Self Portrait_TWO SELVES / ONE PORTRAIT",
     width / 2,
     layout.titleY
   );
@@ -1853,7 +1853,7 @@ function drawEmailInstructions(
 
 
   text(
-    "and send it to aaa@naver.com.",
+    "and send it to juliet0007@naver.com.",
     width / 2,
     layout.email2Y
   );
